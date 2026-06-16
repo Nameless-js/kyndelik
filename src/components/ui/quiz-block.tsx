@@ -55,7 +55,7 @@ type MascotState = "waiting" | "correct" | "wrong" | "victory";
 const mascotImages: Record<MascotState, string> = {
   waiting: "/images/happiness.png",
   correct: "/images/happy.png",
-  wrong: "/images/sad.png",
+  wrong: "/images/sad2.png",
   victory: "/images/victory.png",
 };
 
