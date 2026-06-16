@@ -2,8 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Opportunity, Course, MOCK_COURSES, MOCK_OPPORTUNITIES } from "./data";
+import { supabase } from "./supabase";
 
 export type UserProfile = {
+  id?: string;
   name: string;
   grade: string;
   interests: string[];
@@ -16,90 +18,156 @@ export type CourseProgress = {
 };
 
 interface AppContextType {
+  user: any | null;
   profile: UserProfile | null;
-  setProfile: (profile: UserProfile) => void;
+  setProfile: (profile: UserProfile) => Promise<void>;
   savedOpportunities: string[];
-  toggleSaveOpportunity: (id: string) => void;
+  toggleSaveOpportunity: (id: string) => Promise<void>;
   enrolledCourses: CourseProgress[];
-  enrollCourse: (id: string) => void;
-  markLessonComplete: (courseId: string, lessonId: string) => void;
+  enrollCourse: (id: string) => Promise<void>;
+  markLessonComplete: (courseId: string, lessonId: string) => Promise<void>;
   getRecommendedOpportunities: () => Opportunity[];
   getRecommendedCourses: () => Course[];
   opportunities: Opportunity[];
-  setOpportunities: (opps: Opportunity[]) => void;
+  setOpportunities: (opps: Opportunity[]) => Promise<void>;
   courses: Course[];
-  setCourses: (courses: Course[]) => void;
+  setCourses: (courses: Course[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any | null>(null);
   const [profile, setProfileState] = useState<UserProfile | null>(null);
   const [savedOpportunities, setSavedOpportunities] = useState<string[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<CourseProgress[]>([]);
   
-  // Admin-managed state (mocking DB)
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [opportunities, setOpportunitiesState] = useState<Opportunity[]>([]);
+  const [courses, setCoursesState] = useState<Course[]>([]);
 
-  // Load from local storage
   useEffect(() => {
-    const p = localStorage.getItem("mentoria_profile");
-    if (p) setProfileState(JSON.parse(p));
+    // Supabase Auth Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
     
-    const saved = localStorage.getItem("mentoria_saved_opps");
-    if (saved) setSavedOpportunities(JSON.parse(saved));
-    
-    const enrolled = localStorage.getItem("mentoria_enrolled");
-    if (enrolled) setEnrolledCourses(JSON.parse(enrolled));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
 
-    const localOpps = localStorage.getItem("mentoria_admin_opps");
-    if (localOpps) setOpportunities(JSON.parse(localOpps));
-    else setOpportunities(MOCK_OPPORTUNITIES);
+    // Load static data (Opportunities and Courses)
+    // For MVP we can fall back to mocks if DB is empty
+    const fetchPublicData = async () => {
+      const { data: dbOpps } = await supabase.from('opportunities').select('*');
+      if (dbOpps && dbOpps.length > 0) setOpportunitiesState(dbOpps as Opportunity[]);
+      else setOpportunitiesState(MOCK_OPPORTUNITIES);
 
-    const localCourses = localStorage.getItem("mentoria_admin_courses");
-    if (localCourses) setCourses(JSON.parse(localCourses));
-    else setCourses(MOCK_COURSES);
+      const { data: dbCourses } = await supabase.from('courses').select('*');
+      if (dbCourses && dbCourses.length > 0) {
+        // Also fetch lessons
+        const { data: dbLessons } = await supabase.from('lessons').select('*');
+        const formattedCourses = dbCourses.map(c => ({
+          ...c,
+          lessons: dbLessons ? dbLessons.filter(l => l.course_id === c.id).sort((a,b) => a.order_num - b.order_num) : []
+        }));
+        setCoursesState(formattedCourses as unknown as Course[]);
+      }
+      else setCoursesState(MOCK_COURSES);
+    };
+
+    fetchPublicData();
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const setProfile = (p: UserProfile) => {
+  // Fetch User Data when auth changes
+  useEffect(() => {
+    if (!user) {
+      setProfileState(null);
+      setSavedOpportunities([]);
+      setEnrolledCourses([]);
+      return;
+    }
+
+    const fetchUserData = async () => {
+      // Fetch profile
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (prof) setProfileState(prof);
+
+      // Fetch saved opps
+      const { data: saved } = await supabase.from('user_saved_opportunities').select('opportunity_id').eq('user_id', user.id);
+      if (saved) setSavedOpportunities(saved.map(s => s.opportunity_id));
+
+      // Fetch enrolled courses
+      const { data: enrolled } = await supabase.from('user_enrolled_courses').select('course_id, completed_lessons').eq('user_id', user.id);
+      if (enrolled) setEnrolledCourses(enrolled.map(e => ({ courseId: e.course_id, completedLessons: e.completed_lessons || [] })));
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  const setProfile = async (p: UserProfile) => {
     setProfileState(p);
-    localStorage.setItem("mentoria_profile", JSON.stringify(p));
+    if (user) {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        name: p.name,
+        grade: p.grade,
+        interests: p.interests,
+        goals: p.goals
+      });
+    }
   };
 
-  const toggleSaveOpportunity = (id: string) => {
-    setSavedOpportunities(prev => {
-      const newSaved = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      localStorage.setItem("mentoria_saved_opps", JSON.stringify(newSaved));
-      return newSaved;
-    });
+  const toggleSaveOpportunity = async (id: string) => {
+    const isSaved = savedOpportunities.includes(id);
+    const newSaved = isSaved ? savedOpportunities.filter(x => x !== id) : [...savedOpportunities, id];
+    setSavedOpportunities(newSaved);
+    
+    if (user) {
+      if (isSaved) {
+        await supabase.from('user_saved_opportunities').delete().match({ user_id: user.id, opportunity_id: id });
+      } else {
+        await supabase.from('user_saved_opportunities').insert({ user_id: user.id, opportunity_id: id });
+      }
+    }
   };
 
-  const enrollCourse = (id: string) => {
+  const enrollCourse = async (id: string) => {
+    if (enrolledCourses.find(c => c.courseId === id)) return;
+    const newEnrolled = [...enrolledCourses, { courseId: id, completedLessons: [] }];
+    setEnrolledCourses(newEnrolled);
+    
+    if (user) {
+      await supabase.from('user_enrolled_courses').insert({ user_id: user.id, course_id: id });
+    }
+  };
+
+  const markLessonComplete = async (courseId: string, lessonId: string) => {
+    let updatedEnrolled: CourseProgress[] = [];
     setEnrolledCourses(prev => {
-      if (prev.find(c => c.courseId === id)) return prev;
-      const newEnrolled = [...prev, { courseId: id, completedLessons: [] }];
-      localStorage.setItem("mentoria_enrolled", JSON.stringify(newEnrolled));
-      return newEnrolled;
-    });
-  };
-
-  const markLessonComplete = (courseId: string, lessonId: string) => {
-    setEnrolledCourses(prev => {
-      const newEnrolled = prev.map(c => {
+      updatedEnrolled = prev.map(c => {
         if (c.courseId === courseId && !c.completedLessons.includes(lessonId)) {
           return { ...c, completedLessons: [...c.completedLessons, lessonId] };
         }
         return c;
       });
-      localStorage.setItem("mentoria_enrolled", JSON.stringify(newEnrolled));
-      return newEnrolled;
+      return updatedEnrolled;
     });
+
+    if (user) {
+      const target = updatedEnrolled.find(c => c.courseId === courseId);
+      if (target) {
+        await supabase.from('user_enrolled_courses')
+          .update({ completed_lessons: target.completedLessons })
+          .eq('user_id', user.id)
+          .eq('course_id', courseId);
+      }
+    }
   };
 
   const getRecommendedOpportunities = () => {
     if (!profile) return opportunities.slice(0, 3);
-    // Simple mock logic: match field to interests
     const matches = opportunities.filter(o => 
       profile.interests.includes(o.field) || profile.grade === o.grade
     );
@@ -108,29 +176,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getRecommendedCourses = () => {
     if (!profile) return courses.slice(0, 2);
-    // Mock logic: return courses user is not enrolled in
     const unenrolled = courses.filter(c => !enrolledCourses.find(ec => ec.courseId === c.id));
     return unenrolled.slice(0, 2);
   };
 
-  const updateOpportunities = (opps: Opportunity[]) => {
-      setOpportunities(opps);
-      localStorage.setItem("mentoria_admin_opps", JSON.stringify(opps));
+  const setOpportunities = async (opps: Opportunity[]) => {
+      setOpportunitiesState(opps);
+      // Logic to actually insert to Supabase should go here or be handled by the admin page directly
   }
 
-  const updateCourses = (crs: Course[]) => {
-      setCourses(crs);
-      localStorage.setItem("mentoria_admin_courses", JSON.stringify(crs));
+  const setCourses = async (crs: Course[]) => {
+      setCoursesState(crs);
   }
 
   return (
     <AppContext.Provider value={{
-      profile, setProfile,
+      user, profile, setProfile,
       savedOpportunities, toggleSaveOpportunity,
       enrolledCourses, enrollCourse, markLessonComplete,
       getRecommendedOpportunities, getRecommendedCourses,
-      opportunities, setOpportunities: updateOpportunities,
-      courses, setCourses: updateCourses
+      opportunities, setOpportunities,
+      courses, setCourses
     }}>
       {children}
     </AppContext.Provider>

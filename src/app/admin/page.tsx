@@ -4,10 +4,13 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Opportunity } from "@/lib/data";
 import { Plus, LayoutDashboard, Users, BookOpen, Compass } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminPanel() {
   const { opportunities, setOpportunities, courses } = useAppStore();
   const [showAddOpp, setShowAddOpp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // New Opp Form State
   const [title, setTitle] = useState("");
@@ -17,10 +20,11 @@ export default function AdminPanel() {
   const [deadline, setDeadline] = useState("");
   const [link, setLink] = useState("");
 
-  const handleAddOpp = (e: React.FormEvent) => {
+  const handleAddOpp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newOpp: Opportunity = {
-      id: `opp-${Date.now()}`,
+    setIsSubmitting(true);
+    
+    const newOpp = {
       title,
       description,
       category,
@@ -32,13 +36,38 @@ export default function AdminPanel() {
       requirements: []
     };
     
-    setOpportunities([...opportunities, newOpp]);
-    setShowAddOpp(false);
-    // Reset
-    setTitle("");
-    setDescription("");
-    setDeadline("");
-    setLink("");
+    const { data, error } = await supabase.from('opportunities').insert([newOpp]).select();
+    
+    if (!error && data) {
+      // Data contains the generated UUID from Supabase
+      setOpportunities([...opportunities, data[0] as Opportunity]);
+      setShowAddOpp(false);
+      // Reset
+      setTitle("");
+      setDescription("");
+      setDeadline("");
+      setLink("");
+    } else {
+      console.error("Error inserting opportunity:", error);
+      alert("Ошибка при добавлении. Проверьте права доступа.");
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteOpp = async (id: string) => {
+    if (!confirm("Вы уверены, что хотите удалить эту возможность?")) return;
+    setIsDeleting(id);
+    
+    const { error } = await supabase.from('opportunities').delete().eq('id', id);
+    
+    if (!error) {
+      setOpportunities(opportunities.filter(o => o.id !== id));
+    } else {
+      console.error("Error deleting opportunity:", error);
+      alert("Ошибка при удалении.");
+    }
+    setIsDeleting(null);
   };
 
   return (
@@ -138,8 +167,8 @@ export default function AdminPanel() {
                   <button type="button" onClick={() => setShowAddOpp(false)} className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
                     Отмена
                   </button>
-                  <button type="submit" className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
-                    Сохранить
+                  <button disabled={isSubmitting} type="submit" className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50">
+                    {isSubmitting ? "Сохранение..." : "Сохранить"}
                   </button>
                 </div>
               </form>
@@ -154,6 +183,7 @@ export default function AdminPanel() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дедлайн</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -170,6 +200,15 @@ export default function AdminPanel() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(opp.deadline).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={() => handleDeleteOpp(opp.id)}
+                        disabled={isDeleting === opp.id}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                      >
+                        {isDeleting === opp.id ? "Удаление..." : "Удалить"}
+                      </button>
                     </td>
                   </tr>
                 ))}

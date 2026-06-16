@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { ArrowRight, Check } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const GRADES = ["7", "8", "9", "10", "11", "12"];
 const INTERESTS = [
@@ -17,21 +18,60 @@ const INTERESTS = [
 
 export default function Onboarding() {
   const router = useRouter();
-  const { setProfile } = useAppStore();
+  const { setProfile, user } = useAppStore();
   
-  const [step, setStep] = useState(1);
+  // Step 0: Registration, 1: Name/Grade, 2: Interests, 3: Goals
+  const [step, setStep] = useState(0); 
+  
+  // Auth state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  // Profile state
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [goals, setGoals] = useState("");
+
+  // Skip auth step if already logged in
+  useEffect(() => {
+    if (user && step === 0) {
+      setStep(1);
+    }
+  }, [user, step]);
+
+  const handleSignUp = async () => {
+    setAuthLoading(true);
+    setAuthError("");
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    setAuthLoading(false);
+    
+    if (error) {
+      // If user already exists, try to sign in
+      if (error.message.includes('already registered')) {
+         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+         if (signInError) setAuthError(signInError.message);
+         else setStep(1);
+      } else {
+        setAuthError(error.message);
+      }
+    } else {
+      setStep(1);
+    }
+  };
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
     else handleFinish();
   };
 
-  const handleFinish = () => {
-    setProfile({ name, grade, interests: selectedInterests, goals });
+  const handleFinish = async () => {
+    await setProfile({ name, grade, interests: selectedInterests, goals });
     router.push("/dashboard");
   };
 
@@ -48,16 +88,53 @@ export default function Onboarding() {
           <div className="px-6 py-8 sm:p-10">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {step === 0 && "Регистрация"}
                 {step === 1 && "Давай познакомимся!"}
                 {step === 2 && "Что тебе интересно?"}
                 {step === 3 && "Какие у тебя цели?"}
               </h2>
-              <div className="flex gap-2 mt-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className={`h-2 flex-1 rounded-full ${step >= i ? "bg-blue-600" : "bg-gray-200"}`} />
-                ))}
-              </div>
+              {step > 0 && (
+                <div className="flex gap-2 mt-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className={`h-2 flex-1 rounded-full ${step >= i ? "bg-blue-600" : "bg-gray-200"}`} />
+                  ))}
+                </div>
+              )}
             </div>
+
+            {step === 0 && (
+              <div className="space-y-6">
+                {authError && <div className="p-3 bg-red-100 text-red-700 rounded-xl text-sm">{authError}</div>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="student@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button
+                  onClick={handleSignUp}
+                  disabled={authLoading || !email || !password}
+                  className="w-full flex items-center justify-center px-8 py-4 text-base font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {authLoading ? "Загрузка..." : "Создать аккаунт"}
+                  {!authLoading && <ArrowRight className="ml-2 w-5 h-5" />}
+                </button>
+              </div>
+            )}
 
             {step === 1 && (
               <div className="space-y-6">
@@ -126,16 +203,18 @@ export default function Onboarding() {
               </div>
             )}
 
-            <div className="mt-8">
-              <button
-                onClick={handleNext}
-                disabled={(step === 1 && (!name || !grade)) || (step === 2 && selectedInterests.length === 0)}
-                className="w-full flex items-center justify-center px-8 py-4 text-base font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {step === 3 ? "Перейти в кабинет" : "Продолжить"}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
+            {step > 0 && (
+              <div className="mt-8">
+                <button
+                  onClick={handleNext}
+                  disabled={(step === 1 && (!name || !grade)) || (step === 2 && selectedInterests.length === 0)}
+                  className="w-full flex items-center justify-center px-8 py-4 text-base font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {step === 3 ? "Перейти в кабинет" : "Продолжить"}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
