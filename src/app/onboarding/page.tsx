@@ -1,0 +1,144 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/lib/store";
+import { ArrowRight, Check } from "lucide-react";
+
+const GRADES = ["7", "8", "9", "10", "11", "12"];
+const INTERESTS = [
+  { id: "business", label: "Бизнес" },
+  { id: "stem", label: "STEM" },
+  { id: "social", label: "Социальное влияние" },
+  { id: "finance", label: "Финансы" },
+  { id: "programming", label: "Программирование" },
+  { id: "science", label: "Наука" },
+];
+
+export default function Onboarding() {
+  const router = useRouter();
+  const { setProfile } = useAppStore();
+  
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState("");
+  const [grade, setGrade] = useState("");
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [goals, setGoals] = useState("");
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+    else handleFinish();
+  };
+
+  const handleFinish = () => {
+    setProfile({ name, grade, interests: selectedInterests, goals });
+    router.push("/dashboard");
+  };
+
+  const toggleInterest = (id: string) => {
+    setSelectedInterests(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-6 py-8 sm:p-10">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {step === 1 && "Давай познакомимся!"}
+                {step === 2 && "Что тебе интересно?"}
+                {step === 3 && "Какие у тебя цели?"}
+              </h2>
+              <div className="flex gap-2 mt-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className={`h-2 flex-1 rounded-full ${step >= i ? "bg-blue-600" : "bg-gray-200"}`} />
+                ))}
+              </div>
+            </div>
+
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Как тебя зовут?</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="Твое имя"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">В каком ты классе?</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {GRADES.map(g => (
+                      <button
+                        key={g}
+                        onClick={() => setGrade(g)}
+                        className={`py-2 rounded-xl border text-sm font-medium transition-all ${
+                          grade === g ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                        }`}
+                      >
+                        {g} класс
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-4">
+                <p className="text-gray-600 text-sm mb-4">Выбери направления, чтобы мы могли подобрать лучшие возможности.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {INTERESTS.map(interest => {
+                    const isSelected = selectedInterests.includes(interest.id);
+                    return (
+                      <button
+                        key={interest.id}
+                        onClick={() => toggleInterest(interest.id)}
+                        className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                          isSelected ? "bg-blue-50 border-blue-600 text-blue-700" : "bg-white border-gray-300 text-gray-700 hover:border-blue-400"
+                        }`}
+                      >
+                        <span className="text-sm font-medium">{interest.label}</span>
+                        {isSelected && <Check className="w-4 h-4" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Чего ты хочешь достичь с Mentoria?</label>
+                <textarea
+                  value={goals}
+                  onChange={(e) => setGoals(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  placeholder="Например: хочу поступить в плющевую лигу, выиграть олимпиаду по математике или создать свой стартап..."
+                />
+              </div>
+            )}
+
+            <div className="mt-8">
+              <button
+                onClick={handleNext}
+                disabled={(step === 1 && (!name || !grade)) || (step === 2 && selectedInterests.length === 0)}
+                className="w-full flex items-center justify-center px-8 py-4 text-base font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {step === 3 ? "Перейти в кабинет" : "Продолжить"}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
