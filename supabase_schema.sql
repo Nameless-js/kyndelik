@@ -1,5 +1,13 @@
 -- Run this script in your Supabase SQL Editor to initialize the database
 
+-- 0. Cleanup old tables to prevent "already exists" errors
+DROP TABLE IF EXISTS user_enrolled_courses CASCADE;
+DROP TABLE IF EXISTS user_saved_opportunities CASCADE;
+DROP TABLE IF EXISTS lessons CASCADE;
+DROP TABLE IF EXISTS courses CASCADE;
+DROP TABLE IF EXISTS opportunities CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
 -- 1. Profiles Table
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

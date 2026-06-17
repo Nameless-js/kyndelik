@@ -10,6 +10,8 @@ export default function Dashboard() {
   const router = useRouter();
   const { 
     profile, 
+    user,
+    isLoading,
     savedOpportunities, 
     opportunities, 
     enrolledCourses, 
@@ -26,9 +28,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     setMounted(true);
-    if (!profile) {
+    if (!isLoading && !profile) {
       router.push("/onboarding");
-    } else {
+    } else if (profile) {
       // Fetch AI Recommendation
       const fetchRecommendation = async () => {
         setAiLoading(true);
@@ -49,9 +51,13 @@ export default function Dashboard() {
       };
       fetchRecommendation();
     }
-  }, [profile, router, courses, opportunities]);
+  }, [profile, isLoading, router, courses, opportunities]);
 
-  if (!mounted || !profile) return null;
+  if (!mounted || isLoading || !profile) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  );
 
   const savedOppsList = opportunities.filter(o => savedOpportunities.includes(o.id));
   const recommendedOpps = getRecommendedOpportunities().slice(0, 3);

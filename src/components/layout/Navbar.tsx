@@ -4,16 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, BookOpen, Compass, Settings,
-  User, Moon, Sun, Globe, Calendar, Map,
+  User, Moon, Sun, Globe, Calendar, Map, LogOut
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { profile } = useAppStore();
+  const { profile, user } = useAppStore();
   const { t, language, setLanguage } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -72,20 +73,22 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             {/* Language Switcher */}
             <div className="relative group">
-              <button className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+              <button className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium py-2">
                 <Globe className="w-5 h-5" />
                 <span className="uppercase">{language}</span>
               </button>
-              <div className="absolute right-0 top-full mt-2 w-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 hidden group-hover:block z-10">
-                {(["ru", "en", "kz"] as const).map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => setLanguage(lang)}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 uppercase"
-                  >
-                    {lang}
-                  </button>
-                ))}
+              <div className="absolute right-0 top-full pt-1 hidden group-hover:block z-10">
+                <div className="w-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2">
+                  {(["ru", "en", "kz"] as const).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setLanguage(lang)}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 uppercase"
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -97,6 +100,17 @@ export function Navbar() {
                 title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
               >
                 {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            )}
+
+            {/* Logout Button */}
+            {user && (
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="text-red-500 hover:text-red-600 transition-colors ml-2"
+                title="Выйти из аккаунта"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             )}
 

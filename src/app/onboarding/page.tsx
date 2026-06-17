@@ -19,7 +19,7 @@ const INTERESTS = [
 
 export default function Onboarding() {
   const router = useRouter();
-  const { setProfile, user } = useAppStore();
+  const { setProfile, user, profile } = useAppStore();
   
   // Step 0: Registration, 1: Name/Grade, 2: Interests, 3: Goals
   const [step, setStep] = useState(0); 
@@ -38,10 +38,16 @@ export default function Onboarding() {
 
   // Skip auth step if already logged in
   useEffect(() => {
+    // If the user is fully logged in and already has a profile, go straight to the dashboard
+    if (profile) {
+      router.push("/dashboard");
+      return;
+    }
+
     if (user && step === 0) {
       setStep(1);
     }
-  }, [user, step]);
+  }, [user, profile, step, router]);
 
   const extractError = (err: any) => {
     if (!err) return "Неизвестная ошибка";
@@ -55,43 +61,54 @@ export default function Onboarding() {
     return str;
   };
 
+  const [isLogin, setIsLogin] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+
   const handleSignUp = async () => {
     setAuthLoading(true);
     setAuthError("");
+    setSuccessMsg("");
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      
-      if (error) {
-        const errMsg = extractError(error);
+      if (isLogin) {
+        // Explicit Login
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) setAuthError(extractError(signInError));
+        else setStep(1);
+      } else {
+        // Signup
+        const { data, error } = await supabase.auth.signUp({ email, password });
         
-        // If user already exists, try to sign in
-        if (errMsg.toLowerCase().includes('already registered')) {
-           const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-           if (signInError) {
-             setAuthError(extractError(signInError));
-           } else {
-             setStep(1);
-           }
-        } else {
-          // If Supabase is unreachable, let's mock the success so user can see UI
-          if (errMsg.includes('FetchError') || errMsg.includes('Failed to fetch') || errMsg.includes('AuthRetryable')) {
-             setStep(1);
+        if (error) {
+          const errMsg = extractError(error).toLowerCase();
+          
+          if (errMsg.includes('already registered') || errMsg.includes('too many requests') || errMsg.includes('rate limit')) {
+             const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+             if (signInError) {
+               setAuthError(extractError(error)); // Show original signup error if signin also fails
+             } else {
+               setStep(1);
+             }
+          } else if (errMsg.includes('fetcherror') || errMsg.includes('failed to fetch')) {
+             setStep(1); // Bypass for demo
           } else {
-             setAuthError(errMsg);
+             setAuthError(extractError(error));
+          }
+        } else {
+          // If signup is successful but there's no session, it means email confirmation is required
+          if (data.user && !data.session) {
+            setSuccessMsg("Регистрация успешна! Пожалуйста, проверьте вашу почту и перейдите по ссылке для подтверждения, затем нажмите 'Войти'.");
+            setIsLogin(true); // Switch to login mode for when they return
+          } else {
+            setStep(1);
           }
         }
-      } else {
-        setStep(1);
       }
     } catch (err: any) {
-      const errMsg = extractError(err);
-      if (errMsg.includes('FetchError') || errMsg.includes('Failed to fetch') || errMsg.includes('AuthRetryable')) {
-         setStep(1); // Bypass for demo
+      const errMsg = extractError(err).toLowerCase();
+      if (errMsg.includes('fetcherror') || errMsg.includes('failed to fetch')) {
+         setStep(1);
       } else {
-         setAuthError(errMsg);
+         setAuthError(extractError(err));
       }
     } finally {
       setAuthLoading(false);
@@ -164,13 +181,14 @@ export default function Onboarding() {
             {step === 0 && (
               <div className="space-y-6">
                 {authError && <div className="p-3 bg-red-100 text-red-700 rounded-xl text-sm">{authError}</div>}
+                {successMsg && <div className="p-3 bg-green-100 text-green-700 rounded-xl text-sm">{successMsg}</div>}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder-gray-400"
                     placeholder="student@example.com"
                   />
                 </div>
@@ -180,7 +198,7 @@ export default function Onboarding() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder-gray-400"
                     placeholder="••••••••"
                   />
                 </div>
@@ -189,9 +207,17 @@ export default function Onboarding() {
                   disabled={authLoading || !email || !password}
                   className="w-full flex items-center justify-center px-8 py-4 text-base font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  {authLoading ? "Загрузка..." : "Создать аккаунт"}
+                  {authLoading ? "Загрузка..." : (isLogin ? "Войти" : "Создать аккаунт")}
                   {!authLoading && <ArrowRight className="ml-2 w-5 h-5" />}
                 </button>
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войти"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -203,7 +229,7 @@ export default function Onboarding() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder-gray-400"
                     placeholder="Твое имя"
                   />
                 </div>
@@ -256,7 +282,7 @@ export default function Onboarding() {
                   value={goals}
                   onChange={(e) => setGoals(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-gray-900 placeholder-gray-400"
                   placeholder="Например: хочу поступить в плющевую лигу, выиграть олимпиаду по математике или создать свой стартап..."
                 />
               </div>

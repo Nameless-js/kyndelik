@@ -34,15 +34,18 @@ interface AppContextType {
   setCourses: (courses: Course[]) => Promise<void>;
   addLesson: (courseId: string, lesson: any) => Promise<void>;
   addQuestion: (courseId: string, lessonId: string, question: any) => Promise<void>;
+  isLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
+  const [isAuthLoaded, setIsAuthLoaded] = useState(false);
   const [profile, setProfileState] = useState<UserProfile | null>(null);
   const [savedOpportunities, setSavedOpportunities] = useState<string[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<CourseProgress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [opportunities, setOpportunitiesState] = useState<Opportunity[]>([]);
   const [courses, setCoursesState] = useState<Course[]>([]);
@@ -51,10 +54,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Supabase Auth Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setIsAuthLoaded(true);
     });
     
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
+      setIsAuthLoaded(true);
     });
 
     // Load static data (Opportunities and Courses)
@@ -84,16 +89,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch User Data when auth changes
   useEffect(() => {
+    if (!isAuthLoaded) return; // Wait until auth state is known
+
     if (!user) {
       setProfileState(null);
       setSavedOpportunities([]);
       setEnrolledCourses([]);
+      setIsLoading(false);
       return;
     }
 
     const fetchUserData = async () => {
       // Fetch profile
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data: prof, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (error && error.code !== 'PGRST116') {
+         console.error("Error fetching profile:", error);
+      }
       if (prof) setProfileState(prof);
 
       // Fetch saved opps
@@ -101,8 +112,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (saved) setSavedOpportunities(saved.map(s => s.opportunity_id));
 
       // Fetch enrolled courses
-      const { data: enrolled } = await supabase.from('user_enrolled_courses').select('course_id, completed_lessons').eq('user_id', user.id);
+      const { data: enrolled, error: enrollError } = await supabase.from('user_enrolled_courses').select('course_id, completed_lessons').eq('user_id', user.id);
       if (enrolled) setEnrolledCourses(enrolled.map(e => ({ courseId: e.course_id, completedLessons: e.completed_lessons || [] })));
+
+      setIsLoading(false);
     };
 
     fetchUserData();
@@ -110,14 +123,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setProfile = async (p: UserProfile) => {
     setProfileState(p);
-    if (user) {
-      await supabase.from('profiles').upsert({
-        id: user.id,
+    
+    // Ensure we have the absolute latest session directly from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user || user;
+
+    if (currentUser) {
+      const { error } = await supabase.from('profiles').upsert({
+        id: currentUser.id,
         name: p.name,
         grade: p.grade,
         interests: p.interests,
         goals: p.goals
       });
+      if (error) {
+        console.error("Error saving profile to DB:", error);
+        alert("Ошибка при сохранении профиля в БД: " + error.message);
+      } else {
+        console.log("Profile successfully saved to DB!");
+      }
+    } else {
+      console.error("Cannot save profile to DB because user is null in store!");
+      alert("Ошибка: Вы не авторизованы. Профиль не сохранен.");
     }
   };
 
@@ -225,7 +252,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getRecommendedOpportunities, getRecommendedCourses,
       opportunities, setOpportunities,
       courses, setCourses,
-      addLesson, addQuestion
+      addLesson, addQuestion,
+      isLoading
     }}>
       {children}
     </AppContext.Provider>
