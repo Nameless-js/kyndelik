@@ -66,29 +66,63 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
+// Map our language codes to Google Translate language codes
+const langToGoogleCode: Record<Language, string> = {
+  ru: "ru",
+  en: "en",
+  kz: "kk",
+};
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? match[2] : "";
+}
+
+function getActiveLanguage(): Language {
+  // Check googtrans cookie to see if translation is active
+  const googtrans = getCookie("googtrans");
+  if (googtrans) {
+    const parts = googtrans.split("/");
+    const targetLang = parts[parts.length - 1];
+    if (targetLang === "en") return "en";
+    if (targetLang === "kk") return "kz";
+  }
+  return "ru";
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("ru");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Read active language from googtrans cookie or localStorage
     const saved = localStorage.getItem("mentoria_lang") as Language;
-    if (saved && ["ru", "en", "kz"].includes(saved)) {
-      setLanguageState(saved);
-    }
+    const fromCookie = getActiveLanguage();
+    const active = fromCookie !== "ru" ? fromCookie : (saved && ["ru", "en", "kz"].includes(saved) ? saved : "ru");
+    setLanguageState(active);
   }, []);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
     localStorage.setItem("mentoria_lang", lang);
+
+    if (lang === "ru") {
+      // Remove translation: set cookie to empty/invalid and reload
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
+      window.location.reload();
+    } else {
+      const googleCode = langToGoogleCode[lang];
+      // Set the googtrans cookie that Google Translate reads
+      document.cookie = `googtrans=/ru/${googleCode}; path=/;`;
+      document.cookie = `googtrans=/ru/${googleCode}; path=/; domain=${window.location.hostname};`;
+      window.location.reload();
+    }
   };
 
   const t = (key: string) => {
     return translations[language][key] || key;
   };
 
-  // Prevent hydration mismatch by rendering default ru or null first, but for SEO it's better to just use current state
-  // since it's an MVP, we'll just render it
   return (
     <I18nContext.Provider value={{ language, setLanguage, t }}>
       {children}

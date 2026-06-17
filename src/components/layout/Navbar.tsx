@@ -9,7 +9,7 @@ import {
 import { useAppStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
@@ -18,8 +18,22 @@ export function Navbar() {
   const { t, language, setLanguage } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    if (!langOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [langOpen]);
 
   const links = [
     { href: "/",                                      label: t("home"),          icon: Compass },
@@ -77,24 +91,34 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {/* Language Switcher */}
-            <div className="relative group">
-              <button className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium py-2">
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => setLangOpen((o) => !o)}
+                className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium py-2"
+              >
                 <Globe className="w-5 h-5" />
                 <span className="uppercase">{language}</span>
               </button>
-              <div className="absolute right-0 top-full pt-1 hidden group-hover:block z-10">
-                <div className="w-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2">
-                  {(["ru", "en", "kz"] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setLanguage(lang)}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 uppercase"
-                    >
-                      {lang}
-                    </button>
-                  ))}
+              {langOpen && (
+                <div className="absolute right-0 top-full pt-1 z-50">
+                  <div className="w-28 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2">
+                    {(["ru", "en", "kz"] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => { setLangOpen(false); setLanguage(lang); }}
+                        className={`flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 uppercase font-medium transition-colors ${
+                          language === lang
+                            ? "text-blue-600 dark:text-blue-400"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {language === lang && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
+                        {lang === "ru" ? "🇷🇺 RU" : lang === "en" ? "🇬🇧 EN" : "🇰🇿 KZ"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Theme Toggle */}

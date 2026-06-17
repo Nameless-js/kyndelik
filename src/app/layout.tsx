@@ -53,6 +53,23 @@ export default function RootLayout({
               <main className="flex-grow pt-16">
                 {children}
               </main>
+              
+              {/* Google Translate Hidden Widget */}
+              <div id="google_translate_element" style={{ display: "none" }}></div>
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    function googleTranslateElementInit() {
+                      new google.translate.TranslateElement({
+                        pageLanguage: 'ru',
+                        includedLanguages: 'ru,en,kk',
+                        autoDisplay: false
+                      }, 'google_translate_element');
+                    }
+                  `,
+                }}
+              />
+              <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
             </AppProvider>
           </I18nProvider>
         </Providers>

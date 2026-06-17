@@ -62,3 +62,26 @@ html.a11y-dyslexia * {
 .soundbar-2 { animation: soundbar 0.8s ease-in-out infinite 0.15s; }
 .soundbar-3 { animation: soundbar 0.8s ease-in-out infinite 0.30s; }
 .soundbar-4 { animation: soundbar 0.8s ease-in-out infinite 0.45s; }
+
+/* ── Hide Google Translate toolbar ───────────────────────────────────────── */
+.goog-te-banner-frame,
+.skiptranslate,
+.goog-te-gadget,
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+  position: static !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf {
+  display: none !important;
+}
