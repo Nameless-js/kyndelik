@@ -11,6 +11,14 @@ export type Opportunity = {
   link: string;
 };
 
+export type Question = {
+  id: string;
+  text: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+};
+
 export type Course = {
   id: string;
   title: string;
@@ -22,6 +30,7 @@ export type Course = {
     title: string;
     duration: string;
     videoUrl?: string;
+    questions?: Question[];
   }[];
 };
 
@@ -156,9 +165,33 @@ export const MOCK_COURSES: Course[] = [
     level: "beginner",
     category: "math",
     lessons: [
-      { id: "l1", title: "Введение в алгебру", duration: "15 min" },
-      { id: "l2", title: "Уравнения и неравенства", duration: "20 min" },
-      { id: "l3", title: "Основы геометрии", duration: "25 min" }
+      { 
+        id: "l1", 
+        title: "Что такое MVP и как протестировать гипотезу", 
+        duration: "15 min", 
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        questions: [
+          {
+            id: "q1",
+            text: "Что изучается в теме \"Введение\"?",
+            options: [
+              "Основные концепции и фундаментальные понятия",
+              "История создания",
+              "Биографии учёных",
+              "Ничего из вышеперечисленного"
+            ],
+            correctIndex: 0,
+            explanation: "Каждый урок начинается с изучения базовых понятий."
+          }
+        ]
+      },
+      { 
+        id: "l2", 
+        title: "Основы юнит-экономики", 
+        duration: "20 min", 
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        questions: []
+      }
     ]
   },
   {

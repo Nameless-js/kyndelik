@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { ArrowRight, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { Typewriter } from "@/components/ui/typewriter";
 
 const GRADES = ["7", "8", "9", "10", "11", "12"];
 const INTERESTS = [
@@ -83,6 +84,32 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Заголовок с печатным текстом */}
+      <div className="mb-8 text-center z-10 w-full max-w-2xl mx-auto px-4">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500">
+            Mentoria Hub
+          </span>{" "}
+          <span className="text-gray-800">это</span>
+        </h1>
+        <div className="text-xl sm:text-2xl font-medium text-gray-600 min-h-[40px]">
+          <Typewriter
+            text={[
+              "твой путь к новым знаниям",
+              "лучшая платформа для роста",
+              "сообщество крутых менторов",
+              "удобный интерактивный формат",
+              "пространство для твоих идей",
+            ]}
+            speed={60}
+            waitTime={2000}
+            deleteSpeed={30}
+            cursorChar={"_"}
+            className="text-blue-600 font-bold"
+          />
+        </div>
+      </div>
+
       <div className="max-w-md w-full mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="px-6 py-8 sm:p-10">

@@ -32,6 +32,8 @@ interface AppContextType {
   setOpportunities: (opps: Opportunity[]) => Promise<void>;
   courses: Course[];
   setCourses: (courses: Course[]) => Promise<void>;
+  addLesson: (courseId: string, lesson: any) => Promise<void>;
+  addQuestion: (courseId: string, lessonId: string, question: any) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -189,6 +191,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCoursesState(crs);
   }
 
+  const addLesson = async (courseId: string, lesson: any) => {
+    setCoursesState(prev => prev.map(c => {
+      if (c.id === courseId) {
+        return { ...c, lessons: [...c.lessons, lesson] };
+      }
+      return c;
+    }));
+  };
+
+  const addQuestion = async (courseId: string, lessonId: string, question: any) => {
+    setCoursesState(prev => prev.map(c => {
+      if (c.id === courseId) {
+        return {
+          ...c,
+          lessons: c.lessons.map(l => {
+            if (l.id === lessonId) {
+              return { ...l, questions: [...(l.questions || []), question] };
+            }
+            return l;
+          })
+        };
+      }
+      return c;
+    }));
+  };
+
   return (
     <AppContext.Provider value={{
       user, profile, setProfile,
@@ -196,7 +224,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       enrolledCourses, enrollCourse, markLessonComplete,
       getRecommendedOpportunities, getRecommendedCourses,
       opportunities, setOpportunities,
-      courses, setCourses
+      courses, setCourses,
+      addLesson, addQuestion
     }}>
       {children}
     </AppContext.Provider>

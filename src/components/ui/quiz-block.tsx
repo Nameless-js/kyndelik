@@ -35,18 +35,13 @@ function useSound() {
 }
 
 // --- Типы ---
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-}
+import { Question } from "@/lib/data";
 
 interface QuizBlockProps {
   questions: Question[];
   lessonTitle: string;
   onComplete: () => void;
+  onClose?: () => void;
   isCompleted: boolean;
 }
 
@@ -168,7 +163,15 @@ function XPBar({ current, total }: { current: number; total: number }) {
 }
 
 // Главный блок квиза
-export function QuizBlock({ questions, lessonTitle, onComplete, isCompleted }: QuizBlockProps) {
+export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompleted }: QuizBlockProps) {
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center text-gray-500 dark:text-gray-400">
+        В этом уровне пока нет заданий. Вернитесь позже!
+      </div>
+    );
+  }
+
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
@@ -241,11 +244,19 @@ export function QuizBlock({ questions, lessonTitle, onComplete, isCompleted }: Q
             Ты правильно ответил на <span className="font-bold text-blue-600">{correctCount}</span> из{" "}
             <span className="font-bold">{questions.length}</span> вопросов. Отличная работа!
           </p>
-          <div className="flex items-center justify-center gap-2 text-yellow-600 font-bold text-lg">
+          <div className="flex items-center justify-center gap-2 text-yellow-600 font-bold text-lg mb-8">
             {Array.from({ length: Math.min(correctCount, 3) }).map((_, i) => (
               <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
             ))}
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-colors"
+            >
+              Продолжить
+            </button>
+          )}
         </div>
       </div>
     );
@@ -385,84 +396,3 @@ export function QuizBlock({ questions, lessonTitle, onComplete, isCompleted }: Q
   );
 }
 
-// Генератор вопросов по уроку
-export function generateQuestionsForLesson(lessonId: string, lessonTitle: string): Question[] {
-  // В реальном проекте — запрос к API/БД
-  const questionBank: Record<string, Question[]> = {
-    l1: [
-      {
-        id: "q1",
-        text: `Что изучается в теме "${lessonTitle}"?`,
-        options: [
-          "Основные концепции и фундаментальные понятия данной темы",
-          "История создания предмета",
-          "Биографии учёных",
-          "Ничего из вышеперечисленного",
-        ],
-        correctIndex: 0,
-        explanation: "Каждый урок начинается с изучения ключевых концепций и базовых понятий.",
-      },
-      {
-        id: "q2",
-        text: "Какой подход наиболее эффективен для изучения нового материала?",
-        options: [
-          "Пассивное чтение без практики",
-          "Активная практика и повторение",
-          "Просмотр без записей",
-          "Просто запоминать формулы",
-        ],
-        correctIndex: 1,
-        explanation: "Активная практика с повторением — наиболее эффективный способ усвоения материала.",
-      },
-    ],
-    l2: [
-      {
-        id: "q1",
-        text: "Что является ключевым шагом при решении уравнений?",
-        options: [
-          "Случайное угадывание ответа",
-          "Изоляция переменной",
-          "Игнорирование условий задачи",
-          "Использование калькулятора без понимания",
-        ],
-        correctIndex: 1,
-        explanation: "При решении уравнений главное — изолировать переменную, перенося остальные слагаемые.",
-      },
-      {
-        id: "q2",
-        text: "Если 2x + 4 = 10, то чему равно x?",
-        options: ["2", "3", "5", "7"],
-        correctIndex: 1,
-        explanation: "2x = 10 - 4 = 6, поэтому x = 6/2 = 3.",
-      },
-    ],
-    l3: [
-      {
-        id: "q1",
-        text: "Что такое алгоритм?",
-        options: [
-          "Язык программирования",
-          "Точный набор инструкций для решения задачи",
-          "Математическая формула",
-          "Тип переменной",
-        ],
-        correctIndex: 1,
-        explanation: "Алгоритм — это чёткая последовательность шагов для решения конкретной задачи.",
-      },
-      {
-        id: "q2",
-        text: "Какое свойство должен иметь хороший алгоритм?",
-        options: [
-          "Быть бесконечным",
-          "Иметь неопределённый результат",
-          "Конечность и определённость",
-          "Зависеть от настроения программиста",
-        ],
-        correctIndex: 2,
-        explanation: "Хороший алгоритм должен быть конечным, определённым и давать результат.",
-      },
-    ],
-  };
-
-  return questionBank[lessonId] || questionBank["l1"];
-}
