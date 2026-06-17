@@ -115,13 +115,19 @@ export default function Dashboard() {
                     <span className="ml-2 text-sm">Нейросеть генерирует персональный план...</span>
                   </div>
                 ) : aiRecommendation ? (
-                  <p dangerouslySetInnerHTML={{ __html: aiRecommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                  <p 
+                    className="whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: aiRecommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} 
+                  />
                 ) : (
                   <p>Основываясь на твоем профиле, я подберу идеальный путь. Секундочку...</p>
                 )}
               </div>
             </div>
-            <button className="shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 mt-4 md:mt-0">
+            <button 
+              onClick={() => router.push('/roadmap')}
+              className="shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 mt-4 md:mt-0"
+            >
               Построить Roadmap
             </button>
           </div>
