@@ -228,14 +228,23 @@ export default function OpportunitiesPage() {
                     )}
                   </button>
                   {user ? (
-                    <a
-                      href={selectedOpp.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
-                    >
-                      Подать заявку <ExternalLink className="w-4 h-4 ml-2" />
-                    </a>
+                    selectedOpp.link && selectedOpp.link !== "#" ? (
+                      <a
+                        href={selectedOpp.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                      >
+                        Подать заявку <ExternalLink className="w-4 h-4 ml-2" />
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => alert("Ссылка на заявку пока не добавлена организатором.")}
+                        className="flex-1 flex items-center justify-center px-6 py-3 bg-gray-400 text-white text-sm font-bold rounded-xl shadow-sm cursor-not-allowed"
+                      >
+                        Заявки пока закрыты
+                      </button>
+                    )
                   ) : (
                     <button
                       onClick={() => router.push("/onboarding")}
