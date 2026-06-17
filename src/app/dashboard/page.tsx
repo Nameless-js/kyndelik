@@ -78,12 +78,12 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Profile Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Привет, {profile.name}! 👋</h1>
-            <p className="text-gray-600 dark:text-gray-400">Твой класс: {profile.grade} • Цель: {profile.goals || "Не указана"}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Привет, {profile.name}! 👋</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Твой класс: {profile.grade} • Цель: {profile.goals || "Не указана"}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {profile.interests.map(i => (
               <span key={i} className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full">
                 {i === "business" ? "Бизнес" : i === "stem" ? "STEM" : i}
@@ -93,20 +93,20 @@ export default function Dashboard() {
         </div>
 
         {/* AI Recommendations Block */}
-        <div className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
+        <div className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 sm:p-8 shadow-lg text-white relative overflow-hidden">
           <div className="absolute -right-10 -top-10 opacity-10">
             <Sparkles className="w-64 h-64" />
           </div>
-          <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
-              <Sparkles className="w-8 h-8 text-white" />
+          <div className="relative z-10 flex flex-col md:flex-row gap-4 sm:gap-6 items-start md:items-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="flex-grow">
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <h2 className="text-lg sm:text-2xl font-bold mb-2 flex items-center gap-2">
                 AI-Ассистент Mentoria
                 {aiModel && <span className="text-xs px-2 py-1 bg-white/20 rounded-full font-medium tracking-wider uppercase">{aiModel}</span>}
               </h2>
-              <div className="text-purple-100 text-lg leading-relaxed min-h-[60px]">
+              <div className="text-purple-100 text-sm sm:text-lg leading-relaxed min-h-[60px]">
                 {aiLoading ? (
                   <div className="flex items-center gap-2 animate-pulse">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -126,7 +126,7 @@ export default function Dashboard() {
             </div>
             <button 
               onClick={() => router.push('/roadmap')}
-              className="shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 mt-4 md:mt-0"
+              className="shrink-0 w-full md:w-auto px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
             >
               Построить Roadmap
             </button>

@@ -107,7 +107,7 @@ export default function CalendarPage() {
           {/* Calendar Grid Body */}
           <div className="grid grid-cols-7 auto-rows-fr">
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[140px] p-2 border-r border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-950/30" />
+              <div key={`empty-${i}`} className="min-h-[60px] md:min-h-[140px] p-1 md:p-2 border-r border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-950/30" />
             ))}
             
             {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -119,16 +119,16 @@ export default function CalendarPage() {
               const isPast = dateObj < new Date(new Date().setHours(0,0,0,0));
 
               return (
-                <div key={day} className={`min-h-[140px] p-2 border-r border-b border-gray-100 dark:border-gray-800 transition-colors ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'}`}>
-                  <div className={`text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full mb-2 ${isToday ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'text-gray-700 dark:text-gray-300'}`}>
+                <div key={day} className={`min-h-[60px] md:min-h-[140px] p-1 md:p-2 border-r border-b border-gray-100 dark:border-gray-800 transition-colors ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'}`}>
+                  <div className={`text-xs md:text-sm font-bold w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full mb-1 md:mb-2 ${isToday ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'text-gray-700 dark:text-gray-300'}`}>
                     {day}
                   </div>
-                  <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="space-y-1 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar hidden sm:block">
                     {filteredDeadlines.map(opp => (
                       <div 
                         key={opp.id} 
                         onClick={() => setSelectedOpp(opp)}
-                        className={`text-xs p-2 rounded-lg truncate cursor-pointer transition-all hover:scale-[1.02] shadow-sm border ${
+                        className={`text-xs p-1.5 rounded-lg truncate cursor-pointer transition-all hover:scale-[1.02] shadow-sm border ${
                           isPast 
                             ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 opacity-70'
                             : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800/50 text-indigo-700 dark:text-indigo-300 hover:shadow-md'
@@ -139,6 +139,22 @@ export default function CalendarPage() {
                       </div>
                     ))}
                   </div>
+                  {/* Mobile: just show dot if there are events */}
+                  {filteredDeadlines.length > 0 && (
+                    <div className="sm:hidden flex flex-wrap gap-0.5 mt-1">
+                      {filteredDeadlines.slice(0, 2).map(opp => (
+                        <button
+                          key={opp.id}
+                          onClick={() => setSelectedOpp(opp)}
+                          className={`w-2 h-2 rounded-full ${isPast ? 'bg-gray-400' : 'bg-indigo-500'}`}
+                          title={opp.title}
+                        />
+                      ))}
+                      {filteredDeadlines.length > 2 && (
+                        <span className="text-indigo-500 text-xs leading-none">+{filteredDeadlines.length - 2}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -146,9 +162,9 @@ export default function CalendarPage() {
         </div>
 
         {/* Upcoming List View */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ближайшие дедлайны</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-10 md:mt-16">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">Ближайшие дедлайны</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {opportunities
               .filter(o => new Date(o.deadline) >= new Date(new Date().setHours(0,0,0,0)))
               .filter(o => filterType === "all" || savedOpportunities.includes(o.id))
