@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, Compass, Settings, User, Moon, Sun, Globe, Calendar, Map } from "lucide-react";
+import {
+  LayoutDashboard, BookOpen, Compass, Settings,
+  User, Moon, Sun, Globe, Calendar, Map,
+} from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/theme";
 import { useEffect, useState } from "react";
 
 export function Navbar() {
@@ -18,14 +21,14 @@ export function Navbar() {
   useEffect(() => setMounted(true), []);
 
   const links = [
-    { href: "/", label: t("home"), icon: Compass },
-    { href: "/opportunities", label: t("opportunities"), icon: Compass },
-    { href: "/courses", label: t("courses"), icon: BookOpen },
-    { href: "/calendar", label: t("calendar"), icon: Calendar },
-    { href: "/roadmap", label: t("roadmap"), icon: Map },
-    { href: profile ? "/dashboard" : "/onboarding", label: t("dashboard"), icon: LayoutDashboard },
-    { href: "/admin", label: t("admin"), icon: Settings },
-    { href: "/mentor", label: t("mentor"), icon: User },
+    { href: "/",                                      label: t("home"),          icon: Compass },
+    { href: "/opportunities",                         label: t("opportunities"), icon: Compass },
+    { href: "/courses",                               label: t("courses"),       icon: BookOpen },
+    { href: "/calendar",                              label: t("calendar"),      icon: Calendar },
+    { href: "/roadmap",                               label: t("roadmap"),       icon: Map },
+    { href: profile ? "/dashboard" : "/onboarding",  label: t("dashboard"),     icon: LayoutDashboard },
+    { href: "/admin",                                 label: t("admin"),         icon: Settings },
+    { href: "/mentor",                                label: t("mentor"),        icon: User },
   ];
 
   return (
@@ -37,23 +40,29 @@ export function Navbar() {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
                 M
               </div>
-              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white hidden sm:block">Mentoria Hub</span>
+              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white hidden sm:block">
+                Mentoria Hub
+              </span>
             </Link>
           </div>
-          
-          <div className="hidden lg:flex items-center space-x-6 overflow-x-auto">
+
+          <div className="hidden lg:flex items-center space-x-5 overflow-x-auto">
             {links.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+              const isActive =
+                pathname === link.href ||
+                (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
-                    isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-300"
+                  className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 whitespace-nowrap ${
+                    isActive
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-600 dark:text-gray-300"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   {link.label}
                 </Link>
               );
@@ -67,9 +76,9 @@ export function Navbar() {
                 <Globe className="w-5 h-5" />
                 <span className="uppercase">{language}</span>
               </button>
-              <div className="absolute right-0 top-full mt-2 w-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 hidden group-hover:block">
-                {(["ru", "en", "kz"] as const).map(lang => (
-                  <button 
+              <div className="absolute right-0 top-full mt-2 w-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 hidden group-hover:block z-10">
+                {(["ru", "en", "kz"] as const).map((lang) => (
+                  <button
                     key={lang}
                     onClick={() => setLanguage(lang)}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 uppercase"
@@ -80,11 +89,12 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* Theme Switcher */}
+            {/* Theme Toggle */}
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
               >
                 {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Lexend } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { I18nProvider } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
-import { ThemeProvider } from "next-themes";
+import { Providers } from "@/components/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,10 +16,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const lexend = Lexend({
+  variable: "--font-lexend",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Mentoria Hub MVP",
   description: "Educational opportunities and courses for students",
 };
+
+// Inline script: set dark class before paint to avoid flash
+const themeInit = `try{var t=localStorage.getItem("theme");if(t==="dark"||(t===null&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}`;
 
 export default function RootLayout({
   children,
@@ -28,12 +37,16 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ru"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${lexend.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
+      <body className="min-h-full flex flex-col transition-colors duration-300">
+        <Providers>
           <I18nProvider>
             <AppProvider>
               <Navbar />
@@ -42,7 +55,7 @@ export default function RootLayout({
               </main>
             </AppProvider>
           </I18nProvider>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
