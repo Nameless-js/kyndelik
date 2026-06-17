@@ -15,6 +15,7 @@ CREATE TABLE profiles (
   grade TEXT,
   interests TEXT[],
   goals TEXT,
+  role TEXT DEFAULT 'student',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -70,6 +71,23 @@ CREATE TABLE lessons (
 ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view lessons" ON lessons FOR SELECT USING (true);
 CREATE POLICY "Admins can manage lessons" ON lessons FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE true));
+
+-- 4b. Questions Table
+DROP TABLE IF EXISTS questions CASCADE;
+CREATE TABLE questions (
+  id TEXT PRIMARY KEY,
+  lesson_id TEXT REFERENCES lessons(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  options TEXT[] NOT NULL,
+  correct_index INTEGER NOT NULL DEFAULT 0,
+  explanation TEXT NOT NULL DEFAULT '',
+  order_num INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view questions" ON questions FOR SELECT USING (true);
+CREATE POLICY "Admins can manage questions" ON questions FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE true));
 
 -- 5. User Saved Opportunities
 CREATE TABLE user_saved_opportunities (

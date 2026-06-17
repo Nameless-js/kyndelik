@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { PlayCircle, CheckCircle, ArrowLeft, Check, Award, Download, Video, ListChecks, Lock } from "lucide-react";
 import Link from "next/link";
@@ -15,7 +16,8 @@ type SidebarTab = "lessons" | "tasks";
 
 export default function CourseViewer({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const { courses, enrolledCourses, enrollCourse, markLessonComplete, profile } = useAppStore();
+  const router = useRouter();
+  const { courses, enrolledCourses, enrollCourse, markLessonComplete, profile, user } = useAppStore();
   
   const course = courses.find(c => c.id === resolvedParams.id);
   const enrolled = enrolledCourses.find(c => c.courseId === resolvedParams.id);
@@ -50,6 +52,10 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
   const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
   const handleEnroll = () => {
+    if (!user) {
+      router.push("/onboarding");
+      return;
+    }
     enrollCourse(course.id);
   };
 

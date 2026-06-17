@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { Search, Calendar, Bookmark, BookmarkCheck, X, ExternalLink, Info } from "lucide-react";
 import { Opportunity } from "@/lib/data";
@@ -8,7 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export default function OpportunitiesPage() {
-  const { opportunities, savedOpportunities, toggleSaveOpportunity } = useAppStore();
+  const router = useRouter();
+  const { opportunities, savedOpportunities, toggleSaveOpportunity, user } = useAppStore();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -225,14 +227,23 @@ export default function OpportunitiesPage() {
                       <><Bookmark className="w-5 h-5 mr-2" /> Сохранить</>
                     )}
                   </button>
-                  <a
-                    href={selectedOpp.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
-                  >
-                    Подать заявку <ExternalLink className="w-4 h-4 ml-2" />
-                  </a>
+                  {user ? (
+                    <a
+                      href={selectedOpp.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                    >
+                      Подать заявку <ExternalLink className="w-4 h-4 ml-2" />
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => router.push("/onboarding")}
+                      className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                    >
+                      Войти, чтобы подать заявку <ExternalLink className="w-4 h-4 ml-2" />
+                    </button>
+                  )}
                 </div>
 
               </div>

@@ -1,17 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UploadCloud, Video, Plus, HelpCircle, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { Course, Question } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export default function MentorPortal() {
-  const { courses, setCourses, addLesson, addQuestion } = useAppStore();
+  const router = useRouter();
+  const { profile, isLoading, courses, setCourses, addLesson, addQuestion } = useAppStore();
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
-  
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (!isLoading && (!profile || (profile.role !== "admin" && profile.role !== "mentor"))) {
+      router.push("/");
+    }
+  }, [isLoading, profile, router]);
+
   // Accordion state
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   
@@ -78,6 +88,14 @@ export default function MentorPortal() {
     setAddingQuestionToLesson(null);
     setQText(""); setQOptA(""); setQOptB(""); setQOptC(""); setQOptD(""); setQCorrectIdx(0); setQExpl("");
   };
+
+  if (!mounted || isLoading || !profile || (profile.role !== "admin" && profile.role !== "mentor")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 transition-colors duration-300">

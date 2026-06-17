@@ -4,12 +4,13 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Opportunity, Course, MOCK_COURSES, MOCK_OPPORTUNITIES } from "./data";
 import { supabase } from "./supabase";
 
-export type UserProfile = {
+export interface UserProfile {
   id?: string;
   name: string;
   grade: string;
   interests: string[];
   goals: string;
+  role?: "student" | "mentor" | "admin";
 };
 
 export type CourseProgress = {
@@ -71,11 +72,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const { data: dbCourses } = await supabase.from('courses').select('*');
       if (dbCourses && dbCourses.length > 0) {
-        // Also fetch lessons
+        // Also fetch lessons and questions
         const { data: dbLessons } = await supabase.from('lessons').select('*');
+        const { data: dbQuestions } = await supabase.from('questions').select('*');
         const formattedCourses = dbCourses.map(c => ({
           ...c,
-          lessons: dbLessons ? dbLessons.filter(l => l.course_id === c.id).sort((a,b) => a.order_num - b.order_num) : []
+          lessons: dbLessons
+            ? dbLessons
+                .filter(l => l.course_id === c.id)
+                .sort((a, b) => a.order_num - b.order_num)
+                .map(l => ({
+                  ...l,
+                  questions: dbQuestions
+                    ? dbQuestions
+                        .filter(q => q.lesson_id === l.id)
+                        .sort((a, b) => a.order_num - b.order_num)
+                        .map(q => ({
+                          id: q.id,
+                          text: q.text,
+                          options: q.options,
+                          correctIndex: q.correct_index,
+                          explanation: q.explanation,
+                        }))
+                    : [],
+                }))
+            : [],
         }));
         setCoursesState(formattedCourses as unknown as Course[]);
       }
@@ -211,23 +232,67 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setOpportunities = async (opps: Opportunity[]) => {
       setOpportunitiesState(opps);
-      // Logic to actually insert to Supabase should go here or be handled by the admin page directly
   }
 
   const setCourses = async (crs: Course[]) => {
-      setCoursesState(crs);
+    // Find newly added courses (ones not in current state)
+    const currentIds = courses.map(c => c.id);
+    const newCourses = crs.filter(c => !currentIds.includes(c.id));
+
+    setCoursesState(crs);
+
+    // Insert new courses into Supabase
+    for (const nc of newCourses) {
+      const { data, error } = await supabase.from('courses').insert({
+        title: nc.title,
+        description: nc.description,
+        level: nc.level,
+        category: nc.category,
+      }).select();
+
+      if (error) {
+        console.error("Error inserting course:", error);
+      } else if (data && data[0]) {
+        // Update the local state with the real UUID from Supabase
+        setCoursesState(prev => prev.map(c =>
+          c.id === nc.id ? { ...c, id: data[0].id } : c
+        ));
+      }
+    }
   }
 
   const addLesson = async (courseId: string, lesson: any) => {
+    // Find the course to determine the order number
+    const course = courses.find(c => c.id === courseId);
+    const orderNum = course ? course.lessons.length + 1 : 1;
+
     setCoursesState(prev => prev.map(c => {
       if (c.id === courseId) {
         return { ...c, lessons: [...c.lessons, lesson] };
       }
       return c;
     }));
+
+    // Insert into Supabase
+    const { error } = await supabase.from('lessons').insert({
+      id: lesson.id,
+      course_id: courseId,
+      title: lesson.title,
+      duration: lesson.duration,
+      order_num: orderNum,
+    });
+
+    if (error) {
+      console.error("Error inserting lesson:", error);
+    }
   };
 
   const addQuestion = async (courseId: string, lessonId: string, question: any) => {
+    // Find the lesson to determine the order number
+    const course = courses.find(c => c.id === courseId);
+    const lesson = course?.lessons.find(l => l.id === lessonId);
+    const orderNum = lesson?.questions ? lesson.questions.length + 1 : 1;
+
     setCoursesState(prev => prev.map(c => {
       if (c.id === courseId) {
         return {
@@ -242,6 +307,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return c;
     }));
+
+    // Insert into Supabase
+    const { error } = await supabase.from('questions').insert({
+      id: question.id,
+      lesson_id: lessonId,
+      text: question.text,
+      options: question.options,
+      correct_index: question.correctIndex,
+      explanation: question.explanation,
+      order_num: orderNum,
+    });
+
+    if (error) {
+      console.error("Error inserting question:", error);
+    }
   };
 
   return (

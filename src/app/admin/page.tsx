@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { Opportunity } from "@/lib/data";
 import { Plus, LayoutDashboard, Users, BookOpen, Compass } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminPanel() {
-  const { opportunities, setOpportunities, courses } = useAppStore();
+  const router = useRouter();
+  const { profile, isLoading, opportunities, setOpportunities, courses } = useAppStore();
   const [showAddOpp, setShowAddOpp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (!isLoading && (!profile || profile.role !== "admin")) {
+      router.push("/");
+    }
+  }, [isLoading, profile, router]);
 
   // New Opp Form State
   const [title, setTitle] = useState("");
@@ -69,6 +79,14 @@ export default function AdminPanel() {
     }
     setIsDeleting(null);
   };
+
+  if (!mounted || isLoading || !profile || profile.role !== "admin") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex">

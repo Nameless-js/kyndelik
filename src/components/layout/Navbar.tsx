@@ -28,9 +28,14 @@ export function Navbar() {
     { href: "/calendar",                              label: t("calendar"),      icon: Calendar },
     { href: "/roadmap",                               label: t("roadmap"),       icon: Map },
     { href: profile ? "/dashboard" : "/onboarding",  label: t("dashboard"),     icon: LayoutDashboard },
-    { href: "/admin",                                 label: t("admin"),         icon: Settings },
-    { href: "/mentor",                                label: t("mentor"),        icon: User },
   ];
+
+  if (profile?.role === "admin") {
+    links.push({ href: "/admin", label: t("admin"), icon: Settings });
+    links.push({ href: "/mentor", label: t("mentor"), icon: User });
+  } else if (profile?.role === "mentor") {
+    links.push({ href: "/mentor", label: t("mentor"), icon: User });
+  }
 
   return (
     <nav className="fixed top-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
