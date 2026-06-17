@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { QuizBlock } from "@/components/ui/quiz-block";
 import { LearningPath, PathNode } from "@/components/ui/learning-path";
+import { AICaseGenerator } from "@/components/ui/ai-case-generator";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -492,6 +493,12 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                     Посмотри видео выше, затем перейди во вкладку «Задачи» чтобы проверить знания и пройти уровень!
                   </p>
                 </div>
+
+                {/* AI Case Generator */}
+                <AICaseGenerator 
+                  lessonTitle={activeLesson?.title || course.title} 
+                  interests={profile?.interests || []} 
+                />
               </motion.div>
             ) : (
               /* Default state for tasks tab without selection */
