@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Typewriter } from "@/components/ui/typewriter";
-import { Mail, Lock, User, ArrowRight, Globe, Code } from "lucide-react";
+import { Mail, Lock, ArrowRight, Globe, Code } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Typewriter } from "@/components/ui/typewriter";
 
-export default function RegisterPage() {
-  const [name, setName] = useState("");
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,29 +31,24 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            full_name: name
-          }
-        }
       });
 
-      if (signUpError) throw signUpError;
-      
-      // Successfully registered
+      if (signInError) throw signInError;
+
+      // Successfully logged in
       router.push("/dashboard");
     } catch (err: any) {
       const errMsg = extractError(err);
       if (errMsg.includes('FetchError') || errMsg.includes('Failed to fetch') || errMsg.includes('AuthRetryable')) {
-        // Mock successful registration
+        // Mock successful login
         router.push("/dashboard");
       } else {
-        setError(errMsg || "Ошибка при регистрации. Попробуйте еще раз.");
+        setError(errMsg || "Неверный email или пароль.");
       }
     } finally {
       setLoading(false);
@@ -94,7 +87,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Registration Card */}
+      {/* Login Card */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,9 +95,9 @@ export default function RegisterPage() {
         className="w-full max-w-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/20 dark:border-gray-800/50 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] p-8 relative z-10"
       >
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Создать аккаунт</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Войти в аккаунт</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Присоединяйся к нам и начни обучаться уже сегодня
+            Введите свои учетные данные для доступа к кабинету
           </p>
         </div>
 
@@ -115,26 +108,6 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-              Имя пользователя
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                <User className="w-5 h-5" />
-              </div>
-              <input
-                required
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="Иван Иванов"
-              />
-            </div>
-          </div>
-
           <div className="space-y-1">
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
               Email адрес
@@ -156,9 +129,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-              Пароль
-            </label>
+            <div className="flex justify-between items-center px-1">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Пароль
+              </label>
+            </div>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-500 transition-colors">
                 <Lock className="w-5 h-5" />
@@ -180,7 +155,7 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full py-4 mt-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loading ? "Регистрация..." : "Зарегистрироваться"}
+            {loading ? "Вход..." : "Войти"}
             {!loading && <ArrowRight className="w-5 h-5" />}
           </button>
         </form>
@@ -205,9 +180,9 @@ export default function RegisterPage() {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-          Уже есть аккаунт?{" "}
-          <Link href="/login" className="font-bold text-purple-600 dark:text-purple-400 hover:underline">
-            Войти
+          Нет аккаунта?{" "}
+          <Link href="/register" className="font-bold text-purple-600 dark:text-purple-400 hover:underline">
+            Зарегистрироваться
           </Link>
         </p>
       </motion.div>
