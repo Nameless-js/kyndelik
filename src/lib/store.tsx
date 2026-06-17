@@ -35,6 +35,7 @@ interface AppContextType {
   setCourses: (courses: Course[]) => Promise<void>;
   addLesson: (courseId: string, lesson: any) => Promise<void>;
   addQuestion: (courseId: string, lessonId: string, question: any) => Promise<void>;
+  updateLessonVideoUrl: (courseId: string, lessonId: string, videoUrl: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -83,6 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 .sort((a, b) => a.order_num - b.order_num)
                 .map(l => ({
                   ...l,
+                  videoUrl: l.video_url ?? undefined,
                   questions: dbQuestions
                     ? dbQuestions
                         .filter(q => q.lesson_id === l.id)
@@ -279,6 +281,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       course_id: courseId,
       title: lesson.title,
       duration: lesson.duration,
+      video_url: lesson.videoUrl ?? null,
       order_num: orderNum,
     });
 
@@ -324,6 +327,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateLessonVideoUrl = async (courseId: string, lessonId: string, videoUrl: string) => {
+    // Update local state immediately
+    setCoursesState(prev => prev.map(c => {
+      if (c.id !== courseId) return c;
+      return {
+        ...c,
+        lessons: c.lessons.map(l =>
+          l.id === lessonId ? { ...l, videoUrl: videoUrl || undefined } : l
+        ),
+      };
+    }));
+
+    // Persist to Supabase
+    const { error } = await supabase
+      .from('lessons')
+      .update({ video_url: videoUrl || null })
+      .eq('id', lessonId);
+
+    if (error) {
+      console.error('Error updating video_url:', error);
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       user, profile, setProfile,
@@ -332,7 +358,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getRecommendedOpportunities, getRecommendedCourses,
       opportunities, setOpportunities,
       courses, setCourses,
-      addLesson, addQuestion,
+      addLesson, addQuestion, updateLessonVideoUrl,
       isLoading
     }}>
       {children}
