@@ -70,11 +70,8 @@ export function Navbar() {
     { href: profile ? "/dashboard" : "/onboarding",  label: t("dashboard"),     icon: LayoutDashboard },
   ];
 
-  if (profile?.role === "admin") {
+  if (profile?.role === "admin" || profile?.role === "mentor") {
     links.push({ href: "/admin", label: t("admin"), icon: Settings });
-    links.push({ href: "/mentor", label: t("mentor"), icon: User });
-  } else if (profile?.role === "mentor") {
-    links.push({ href: "/mentor", label: t("mentor"), icon: User });
   }
 
   return (

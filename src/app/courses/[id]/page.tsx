@@ -28,6 +28,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SidebarTab>("lessons");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [mascotImg, setMascotImg] = useState("/images/happiness.png");
   const [showCertificate, setShowCertificate] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState<Record<string, boolean>>({});
 
@@ -38,6 +39,17 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
       });
     }
   }, [course, activeLessonId]);
+
+  useEffect(() => {
+    const images = [
+      "/images/1.png", 
+      "/images/2.png", 
+      "/images/3.png", 
+      "/images/4.png", 
+      "/images/happiness.png"
+    ];
+    setMascotImg(images[Math.floor(Math.random() * images.length)]);
+  }, []);
 
   useEffect(() => {
     if (enrolled) {
@@ -452,7 +464,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Image
-                    src="/images/happiness.png"
+                    src={mascotImg}
                     alt="Лисёнок"
                     width={100}
                     height={100}
