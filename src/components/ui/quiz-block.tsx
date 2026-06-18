@@ -175,7 +175,7 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(isCompleted ? questions.length : 0);
   const [mascotState, setMascotState] = useState<MascotState>("waiting");
   const [showConfetti, setShowConfetti] = useState(false);
   const [allDone, setAllDone] = useState(isCompleted);
@@ -207,14 +207,19 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
   const handleNext = () => {
     const nextIndex = currentQ + 1;
     if (nextIndex >= questions.length) {
-      // Все вопросы пройдены!
       setAllDone(true);
-      setMascotState("victory");
-      setShowConfetti(true);
-      onComplete();
-      stop(); // Останавливаем предыдущий звук
-      play("/sounds/victory.mp3");
-      setTimeout(() => setShowConfetti(false), 3500);
+      if (correctCount === 0 && !isCompleted) {
+        // Провал
+        setMascotState("wrong");
+      } else {
+        // Успех
+        setMascotState("victory");
+        setShowConfetti(true);
+        onComplete();
+        stop(); // Останавливаем предыдущий звук
+        play("/sounds/victory.mp3");
+        setTimeout(() => setShowConfetti(false), 3500);
+      }
     } else {
       setCurrentQ(nextIndex);
       setSelected(null);
@@ -222,6 +227,17 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
       setShowExplanation(false);
       setMascotState("waiting");
     }
+  };
+
+  const handleResetQuiz = () => {
+    setCurrentQ(0);
+    setSelected(null);
+    setAnswered(false);
+    setCorrectCount(0);
+    setWrongAttempts(0);
+    setShowExplanation(false);
+    setMascotState("waiting");
+    setAllDone(false);
   };
 
   const handleRetry = () => {
@@ -232,6 +248,47 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
   };
 
   if (allDone) {
+    const isAllWrong = correctCount === 0 && !isCompleted;
+
+    if (isAllWrong) {
+      return (
+        <div className="relative">
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl border border-red-100 p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="flex flex-col items-center gap-3">
+                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative">
+                  <Image src="/images/sad2.png" alt="Лисёнок-грустит" width={120} height={120} className="object-contain drop-shadow-lg" />
+                </motion.div>
+                <div className="bg-white border border-gray-100 shadow-md rounded-2xl px-4 py-2 text-sm font-medium text-gray-700 text-center max-w-[140px]">
+                  Может в следующий раз получится!
+                </div>
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Не сдавайся!</h3>
+            <p className="text-gray-600 mb-6">
+              Ты ответил правильно на <span className="font-bold text-red-600">0</span> из <span className="font-bold">{questions.length}</span> вопросов.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+              <button
+                onClick={handleResetQuiz}
+                className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                Попробовать заново
+              </button>
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-colors"
+                >
+                  Продолжить
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="relative">
         {showConfetti && <Confetti />}
