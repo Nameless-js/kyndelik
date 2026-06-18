@@ -108,7 +108,10 @@ const Typewriter = ({
   ])
 
   return (
-    <div className={`inline whitespace-pre-wrap tracking-tight ${className}`}>
+    <div
+      translate="no"
+      className={`notranslate inline-block whitespace-normal break-words tracking-tight overflow-visible ${className}`}
+    >
       <span>{displayText}</span>
       {showCursor && (
         <motion.span

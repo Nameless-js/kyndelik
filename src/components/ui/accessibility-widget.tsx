@@ -5,6 +5,25 @@ import { Settings, X, Type, Eye, Palette, Mic, Sun, Moon, CheckCircle2 } from "l
 import { useAccessibility } from "@/lib/accessibility";
 import { useTheme } from "@/lib/theme";
 
+interface ToggleProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  color: string;
+}
+
+const Toggle = ({ checked, onChange, color }: ToggleProps) => (
+  <button
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={`relative w-12 h-6 rounded-full transition-colors duration-300 shrink-0 ${checked ? color : "bg-gray-200 dark:bg-gray-700"}`}
+  >
+    <span
+      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${checked ? "translate-x-6" : ""}`}
+    />
+  </button>
+);
+
 export function AccessibilityWidget() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -37,27 +56,6 @@ export function AccessibilityWidget() {
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, []);
-
-  const Toggle = ({
-    checked,
-    onChange,
-    color,
-  }: {
-    checked: boolean;
-    onChange: (v: boolean) => void;
-    color: string;
-  }) => (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative w-12 h-6 rounded-full transition-colors duration-300 shrink-0 ${checked ? color : "bg-gray-200 dark:bg-gray-700"}`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${checked ? "translate-x-6" : ""}`}
-      />
-    </button>
-  );
 
   return (
     <div ref={panelRef} className="fixed bottom-6 left-6 z-[300]">

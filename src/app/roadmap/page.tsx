@@ -4,6 +4,8 @@ import { useAppStore } from "@/lib/store";
 import { Map, Plus, CheckCircle2, ChevronRight, Target, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 
 type Milestone = {
   id: string;
@@ -53,6 +55,8 @@ const INITIAL_ROADMAP: GradePlan[] = [
 ];
 
 export default function RoadmapPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [roadmap, setRoadmap] = useState<GradePlan[]>(INITIAL_ROADMAP);
   const [addingToGrade, setAddingToGrade] = useState<string | null>(null);
   const [newTask, setNewTask] = useState("");
@@ -63,12 +67,17 @@ export default function RoadmapPage() {
     const saved = localStorage.getItem("mentoria_roadmap");
     if (saved) {
       try {
-        setRoadmap(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        Promise.resolve().then(() => {
+          setRoadmap(parsed);
+        });
       } catch (e) {
         console.error("Failed to parse roadmap", e);
       }
     }
-    setIsLoaded(true);
+    Promise.resolve().then(() => {
+      setIsLoaded(true);
+    });
   }, []);
 
   // Save to local storage on change
@@ -125,15 +134,30 @@ export default function RoadmapPage() {
   if (!isLoaded) return null; // Prevent hydration mismatch
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen py-12 transition-colors duration-300 relative overflow-hidden ${isDark ? "bg-[#050505] text-white" : "bg-[#f0f4f8] text-gray-900"}`}>
+      {/* ── Background Mesh ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div
+          className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] rounded-full opacity-[0.08] animate-blob"
+          style={{ background: isDark ? "radial-gradient(circle, rgba(0,191,255,0.35) 0%, transparent 70%)" : "radial-gradient(circle, rgba(0,136,204,0.15) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] rounded-full opacity-[0.06] animate-blob"
+          style={{ background: isDark ? "radial-gradient(circle, rgba(89,223,255,0.25) 0%, transparent 70%)" : "radial-gradient(circle, rgba(0,163,224,0.12) 0%, transparent 70%)", animationDelay: "3s" }}
+        />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <div className="mb-12 text-center max-w-2xl mx-auto">
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mx-auto mb-6 shadow-sm">
+          <div className={cn(
+            "w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm",
+            isDark ? "bg-[#00BFFF]/10 text-[#59DFFF]" : "bg-blue-100 text-blue-600"
+          )}>
             <Map className="w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Твой Roadmap</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
+          <h1 className="text-4xl font-black mb-4">Твой Roadmap</h1>
+          <p className={cn("text-lg", isDark ? "text-gray-400" : "text-gray-600")}>
             Пошаговый план от 9 до 12 класса. Выполняй задачи, добавляй свои цели и отслеживай прогресс к поступлению мечты.
           </p>
         </div>
@@ -144,23 +168,41 @@ export default function RoadmapPage() {
             const progress = gradePlan.milestones.length > 0 ? Math.round((completedCount / gradePlan.milestones.length) * 100) : 0;
             
             return (
-              <div key={gradePlan.grade} className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden">
+              <div 
+                key={gradePlan.grade} 
+                className={cn(
+                  "card-premium p-8 border relative overflow-hidden transition-all duration-300",
+                  isDark ? "bg-[#0a1020]/65 border-[rgba(0,191,255,0.12)]" : "bg-white/70 border-[rgba(0,136,204,0.12)] shadow-sm"
+                )}
+              >
                 {/* Visual Connection line for desktop */}
                 {index !== roadmap.length - 1 && (
-                  <div className="hidden md:block absolute left-16 top-[100%] h-8 w-0.5 bg-gray-200 dark:bg-gray-800 z-0" />
+                  <div className={cn(
+                    "hidden md:block absolute left-16 top-[100%] h-8 w-0.5 z-0",
+                    isDark ? "bg-neutral-800" : "bg-gray-200"
+                  )} />
                 )}
                 
                 <div className="flex flex-col md:flex-row gap-8 relative z-10">
                   {/* Grade Header */}
                   <div className="w-full md:w-64 shrink-0">
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">{gradePlan.grade}</h2>
+                    <h2 className="text-3xl font-black mb-2">{gradePlan.grade}</h2>
                     <div className="flex items-center mb-2">
-                      <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2 mr-3">
-                        <div className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                      <div className={cn(
+                        "flex-1 rounded-full h-2 mr-3",
+                        isDark ? "bg-neutral-800" : "bg-gray-150"
+                      )}>
+                        <div 
+                          className={cn(
+                            "h-2 rounded-full transition-all duration-500",
+                            isDark ? "bg-[#00BFFF]" : "bg-blue-600"
+                          )} 
+                          style={{ width: `${progress}%` }} 
+                        />
                       </div>
-                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{progress}%</span>
+                      <span className={cn("text-sm font-bold", isDark ? "text-gray-300" : "text-gray-700")}>{progress}%</span>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{completedCount} из {gradePlan.milestones.length} выполнено</p>
+                    <p className={cn("text-sm", isDark ? "text-gray-500" : "text-gray-400")}>{completedCount} из {gradePlan.milestones.length} выполнено</p>
                   </div>
 
                   {/* Milestones List */}
@@ -172,22 +214,33 @@ export default function RoadmapPage() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95 }}
-                          className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                          className={cn(
+                            "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
                             milestone.completed 
-                              ? "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-75" 
-                              : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow-md"
-                          }`}
+                              ? isDark 
+                                ? "bg-neutral-900/40 border-neutral-800/80 opacity-60" 
+                                : "bg-gray-50 border-gray-200 opacity-70"
+                              : isDark
+                                ? "bg-[#0a1020]/80 border-[rgba(0,191,255,0.15)] hover:border-[#00BFFF]/40 shadow-sm"
+                                : "bg-white border-[rgba(0,136,204,0.15)] hover:border-[#0088cc]/40 shadow-sm hover:shadow-md"
+                          )}
                         >
                           <button
                             onClick={() => toggleMilestone(gradePlan.grade, milestone.id)}
-                            className="flex items-center flex-1 text-left"
+                            className="flex items-center flex-1 text-left cursor-pointer"
                           >
-                            <CheckCircle2 className={`w-6 h-6 mr-4 flex-shrink-0 transition-colors ${
-                              milestone.completed ? "text-green-500" : "text-gray-300 dark:text-gray-600"
-                            }`} />
-                            <span className={`font-medium ${
-                              milestone.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-900 dark:text-gray-100"
-                            }`}>
+                            <CheckCircle2 className={cn(
+                              "w-6 h-6 mr-4 flex-shrink-0 transition-colors duration-300",
+                              milestone.completed 
+                                ? "text-green-500" 
+                                : isDark ? "text-gray-600" : "text-gray-300"
+                            )} />
+                            <span className={cn(
+                              "font-medium transition-colors",
+                              milestone.completed 
+                                ? "line-through text-gray-500" 
+                                : isDark ? "text-gray-100" : "text-gray-900"
+                            )}>
                               {milestone.title}
                             </span>
                           </button>
@@ -197,7 +250,12 @@ export default function RoadmapPage() {
                                 e.stopPropagation();
                                 handleDeleteTask(gradePlan.grade, milestone.id);
                               }}
-                              className="p-2 ml-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                              className={cn(
+                                "p-2 ml-2 rounded-lg transition-colors flex-shrink-0 cursor-pointer",
+                                isDark
+                                  ? "text-gray-500 hover:text-red-400 hover:bg-red-500/10"
+                                  : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              )}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -215,12 +273,17 @@ export default function RoadmapPage() {
                           value={newTask}
                           onChange={e => setNewTask(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && handleAddTask(gradePlan.grade)}
-                          className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                          className={cn(
+                            "input-premium flex-1 px-4 py-3 border rounded-xl outline-none transition-all duration-300",
+                            isDark
+                              ? "bg-[#050505] border-[rgba(0,191,255,0.25)] text-white focus:border-[#59DFFF]"
+                              : "bg-white border-[rgba(0,136,204,0.25)] text-gray-900 focus:border-[#0088cc]"
+                          )}
                           placeholder="Введите задачу..."
                         />
                         <button 
                           onClick={() => handleAddTask(gradePlan.grade)}
-                          className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                          className="btn-primary px-6 py-3 text-white font-bold rounded-xl transition-all"
                         >
                           Сохранить
                         </button>
@@ -228,7 +291,10 @@ export default function RoadmapPage() {
                     ) : (
                       <button 
                         onClick={() => setAddingToGrade(gradePlan.grade)}
-                        className="flex items-center text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-2 px-1 mt-2"
+                        className={cn(
+                          "flex items-center text-sm font-bold transition-colors py-2 px-1 mt-2 cursor-pointer",
+                          isDark ? "text-gray-500 hover:text-[#00BFFF]" : "text-gray-500 hover:text-blue-600"
+                        )}
                       >
                         <Plus className="w-5 h-5 mr-1" />
                         Добавить свою цель

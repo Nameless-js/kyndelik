@@ -5,6 +5,7 @@ import { AppProvider } from "@/lib/store";
 import { I18nProvider } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { Providers } from "@/components/Providers";
+import { CustomCursor } from "@/components/ui/custom-cursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +28,8 @@ export const metadata: Metadata = {
   description: "Educational opportunities and courses for students",
 };
 
-// Inline script: set dark class before paint to avoid flash
-const themeInit = `try{var t=localStorage.getItem("theme");if(t==="dark"||(t===null&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}`;
+// Inline script: read theme from localStorage before paint to avoid FOUC
+const themeInit = `try{var t=localStorage.getItem("theme")||"dark";document.documentElement.classList.add(t);document.documentElement.style.colorScheme=t}catch(e){document.documentElement.classList.add("dark")}`;
 
 export default function RootLayout({
   children,
@@ -38,39 +39,26 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
+      translate="no"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${lexend.variable} h-full antialiased`}
     >
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* Prevent Google Translate and other auto-translators from garbling animated text */}
+        <meta name="google" content="notranslate" />
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body className="min-h-full flex flex-col transition-colors duration-300">
+      <body className="min-h-full flex flex-col transition-colors duration-300 bg-[var(--background)] text-[var(--foreground)]">
         <Providers>
           <I18nProvider>
             <AppProvider>
+              <CustomCursor />
               <Navbar />
               <main className="flex-grow pt-16">
                 {children}
               </main>
-              
-              {/* Google Translate Hidden Widget */}
-              <div id="google_translate_element" style={{ display: "none" }}></div>
-              <script
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    function googleTranslateElementInit() {
-                      new google.translate.TranslateElement({
-                        pageLanguage: 'ru',
-                        includedLanguages: 'ru,en,kk',
-                        autoDisplay: false
-                      }, 'google_translate_element');
-                    }
-                  `,
-                }}
-              />
-              <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
             </AppProvider>
           </I18nProvider>
         </Providers>

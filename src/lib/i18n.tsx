@@ -12,6 +12,7 @@ type Translations = {
 
 const translations: Translations = {
   ru: {
+    // Navigation
     home: "Главная",
     opportunities: "Возможности",
     courses: "Курсы",
@@ -25,8 +26,44 @@ const translations: Translations = {
     competitions: "Конкурсы",
     programs: "Программы",
     scholarships: "Стипендии",
+    // Onboarding tagline
+    onboarding_copula: "это",
+    onboarding_tw_1: "твой путь к новым знаниям",
+    onboarding_tw_2: "лучшая платформа для роста",
+    onboarding_tw_3: "сообщество крутых менторов",
+    // Home hero
+    hero_rotating_1: "К вершинам",
+    hero_rotating_2: "К успеху",
+    hero_rotating_3: "К мечте",
+    hero_rotating_4: "К росту",
+    hero_subtitle: "Mentoria Hub — твой путь",
+    hero_second_line: "начинается здесь",
+    hero_badge: "Платформа №1 для амбициозных школьников",
+    hero_description:
+      "Mentoria Hub — единая платформа, где амбициозные школьники находят лучшие возможности и проходят курсы для достижения своих целей.",
+    btn_find_opportunities: "Найти возможности",
+    btn_start_learning: "Начать обучение",
+    stat_opportunities: "Возможностей",
+    stat_courses: "Курсов",
+    stat_students: "Учеников",
+    // Common UI
+    loading: "Загрузка...",
+    error: "Ошибка",
+    save: "Сохранить",
+    cancel: "Отмена",
+    continue_btn: "Продолжить",
+    finish_btn: "Перейти в кабинет",
+    // Login / Register tagline
+    login_tw_1: "твой путь к знаниям",
+    login_tw_2: "сообщество менторов",
+    login_tw_3: "пространство для роста",
+    register_tw_1: "твой путь к новым знаниям",
+    register_tw_2: "лучшая платформа для роста",
+    register_tw_3: "пространство для твоих идей",
   },
+
   en: {
+    // Navigation
     home: "Home",
     opportunities: "Opportunities",
     courses: "Courses",
@@ -40,8 +77,44 @@ const translations: Translations = {
     competitions: "Competitions",
     programs: "Programs",
     scholarships: "Scholarships",
+    // Onboarding tagline
+    onboarding_copula: "is",
+    onboarding_tw_1: "your path to new knowledge",
+    onboarding_tw_2: "the best platform for growth",
+    onboarding_tw_3: "a community of great mentors",
+    // Home hero
+    hero_rotating_1: "To the top",
+    hero_rotating_2: "To success",
+    hero_rotating_3: "To your dream",
+    hero_rotating_4: "To growth",
+    hero_subtitle: "Mentoria Hub — your path",
+    hero_second_line: "starts here",
+    hero_badge: "Platform #1 for ambitious students",
+    hero_description:
+      "Mentoria Hub — the all-in-one platform where ambitious students find the best opportunities and take courses to achieve their goals.",
+    btn_find_opportunities: "Find Opportunities",
+    btn_start_learning: "Start Learning",
+    stat_opportunities: "Opportunities",
+    stat_courses: "Courses",
+    stat_students: "Students",
+    // Common UI
+    loading: "Loading...",
+    error: "Error",
+    save: "Save",
+    cancel: "Cancel",
+    continue_btn: "Continue",
+    finish_btn: "Go to Dashboard",
+    // Login / Register tagline
+    login_tw_1: "your path to knowledge",
+    login_tw_2: "a community of mentors",
+    login_tw_3: "space for growth",
+    register_tw_1: "your path to new knowledge",
+    register_tw_2: "the best platform for growth",
+    register_tw_3: "space for your ideas",
   },
+
   kz: {
+    // Navigation
     home: "Басты бет",
     opportunities: "Мүмкіндіктер",
     courses: "Курстар",
@@ -55,72 +128,103 @@ const translations: Translations = {
     competitions: "Байқаулар",
     programs: "Бағдарламалар",
     scholarships: "Стипендиялар",
-  }
+    // Onboarding tagline
+    onboarding_copula: "бұл",
+    onboarding_tw_1: "жаңа білімге апаратын жол",
+    onboarding_tw_2: "өсу үшін ең жақсы платформа",
+    onboarding_tw_3: "керемет тәлімгерлер қауымдастығы",
+    // Home hero
+    hero_rotating_1: "Шыңдарға",
+    hero_rotating_2: "Жетістікке",
+    hero_rotating_3: "Арманға",
+    hero_rotating_4: "Өсуге",
+    hero_subtitle: "Mentoria Hub — сенің жолың",
+    hero_second_line: "осында басталады",
+    hero_badge: "Талапты оқушылар үшін №1 платформа",
+    hero_description:
+      "Mentoria Hub — талапты оқушылар ең жақсы мүмкіндіктерді табатын және мақсаттарына жету үшін курстар өтетін бірыңғай платформа.",
+    btn_find_opportunities: "Мүмкіндіктер табу",
+    btn_start_learning: "Оқуды бастау",
+    stat_opportunities: "Мүмкіндік",
+    stat_courses: "Курс",
+    stat_students: "Оқушы",
+    // Common UI
+    loading: "Жүктелуде...",
+    error: "Қате",
+    save: "Сақтау",
+    cancel: "Болдырмау",
+    continue_btn: "Жалғастыру",
+    finish_btn: "Кабинетке өту",
+    // Login / Register tagline
+    login_tw_1: "білімге апаратын жолың",
+    login_tw_2: "тәлімгерлер қауымдастығы",
+    login_tw_3: "өсуге арналған кеңістік",
+    register_tw_1: "жаңа білімге апаратын жолың",
+    register_tw_2: "өсу үшін ең жақсы платформа",
+    register_tw_3: "идеяларыңа арналған кеңістік",
+  },
 };
 
-interface I18nContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-}
+// ─── Runtime ──────────────────────────────────────────────────────────────────
 
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
+const VALID_LANGS: Language[] = ["ru", "en", "kz"];
+const STORAGE_KEY = "mentoria_lang";
 
-// Map our language codes to Google Translate language codes
-const langToGoogleCode: Record<Language, string> = {
-  ru: "ru",
-  en: "en",
-  kz: "kk",
-};
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return "";
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : "";
-}
-
-function getActiveLanguage(): Language {
-  // Check googtrans cookie to see if translation is active
-  const googtrans = getCookie("googtrans");
-  if (googtrans) {
-    const parts = googtrans.split("/");
-    const targetLang = parts[parts.length - 1];
-    if (targetLang === "en") return "en";
-    if (targetLang === "kk") return "kz";
+/** Read the saved language from localStorage (safe for SSR). */
+function getSavedLanguage(): Language {
+  if (typeof window === "undefined") return "ru";
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && VALID_LANGS.includes(saved as Language)) {
+      return saved as Language;
+    }
+  } catch {
+    // localStorage blocked (e.g. private mode)
   }
   return "ru";
 }
 
+interface I18nContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string, fallback?: string) => string;
+}
+
+const I18nContext = createContext<I18nContextType | undefined>(undefined);
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
+  // Start with "ru" to match SSR, hydrate from localStorage after mount
   const [language, setLanguageState] = useState<Language>("ru");
 
   useEffect(() => {
-    // Read active language from googtrans cookie or localStorage
-    const saved = localStorage.getItem("mentoria_lang") as Language;
-    const fromCookie = getActiveLanguage();
-    const active = fromCookie !== "ru" ? fromCookie : (saved && ["ru", "en", "kz"].includes(saved) ? saved : "ru");
-    setLanguageState(active);
+    setLanguageState(getSavedLanguage());
   }, []);
 
   const setLanguage = (lang: Language) => {
-    localStorage.setItem("mentoria_lang", lang);
-
-    if (lang === "ru") {
-      // Remove translation: set cookie to empty/invalid and reload
-      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-      window.location.reload();
-    } else {
-      const googleCode = langToGoogleCode[lang];
-      // Set the googtrans cookie that Google Translate reads
-      document.cookie = `googtrans=/ru/${googleCode}; path=/;`;
-      document.cookie = `googtrans=/ru/${googleCode}; path=/; domain=${window.location.hostname};`;
-      window.location.reload();
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // ignore
     }
+    // Instant re-render — no page reload needed
+    setLanguageState(lang);
   };
 
-  const t = (key: string) => {
-    return translations[language][key] || key;
+  const t = (key: string, fallback?: string): string => {
+    const isValid = (v: unknown): v is string =>
+      typeof v === "string" && v.trim() !== "" && v !== "-";
+
+    const val = translations[language]?.[key];
+    if (isValid(val)) return val;
+
+    if (fallback !== undefined && isValid(fallback)) return fallback;
+
+    // Fall back to Russian if key is missing in current language
+    const ruVal = translations["ru"]?.[key];
+    if (isValid(ruVal)) return ruVal;
+
+    // Last resort: return the key itself
+    return key;
   };
 
   return (

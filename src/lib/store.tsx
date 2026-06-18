@@ -115,10 +115,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!isAuthLoaded) return; // Wait until auth state is known
 
     if (!user) {
-      setProfileState(null);
-      setSavedOpportunities([]);
-      setEnrolledCourses([]);
-      setIsLoading(false);
+      Promise.resolve().then(() => {
+        setProfileState(null);
+        setSavedOpportunities([]);
+        setEnrolledCourses([]);
+        setIsLoading(false);
+      });
       return;
     }
 

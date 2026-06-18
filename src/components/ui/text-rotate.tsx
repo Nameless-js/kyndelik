@@ -176,7 +176,9 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
 
     return (
       <motion.span
-        className={cn("flex flex-wrap whitespace-pre-wrap", mainClassName)}
+        className={cn("flex flex-wrap whitespace-pre-wrap notranslate", mainClassName)}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        translate="no"
         {...props}
         layout
         transition={transition}

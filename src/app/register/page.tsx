@@ -2,13 +2,22 @@
 
 import { useState } from "react";
 import { Typewriter } from "@/components/ui/typewriter";
-import { Mail, Lock, User, ArrowRight, Globe, Code } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
+import { Mail, Lock, User, ArrowRight, Globe, Code, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+const PERKS = [
+  "Бесплатный доступ ко всем базовым функциям",
+  "Персональные AI-рекомендации",
+  "Сотни конкурсов и стипендий",
+  "Трекер прогресса и достижений",
+];
+
 export default function RegisterPage() {
+  const { t, language } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,26 +42,19 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: name
-          }
-        }
+        options: { data: { full_name: name } }
       });
 
       if (signUpError) throw signUpError;
-      
-      // Successfully registered
       router.push("/dashboard");
     } catch (err: any) {
       const errMsg = extractError(err);
       if (errMsg.includes('FetchError') || errMsg.includes('Failed to fetch') || errMsg.includes('AuthRetryable')) {
-        // Mock successful registration
         router.push("/dashboard");
       } else {
         setError(errMsg || "Ошибка при регистрации. Попробуйте еще раз.");
@@ -63,154 +65,216 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 relative overflow-hidden px-4">
-      {/* Background Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/20 dark:bg-purple-600/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/20 dark:bg-blue-600/20 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen w-full flex bg-background overflow-hidden text-foreground relative transition-colors duration-300">
+      {/* ── Background Mesh Spotlights ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full opacity-[0.08] animate-blob"
+          style={{ background: "radial-gradient(circle, rgba(0,191,255,0.4) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full opacity-[0.06] animate-blob"
+          style={{ background: "radial-gradient(circle, rgba(89,223,255,0.3) 0%, transparent 70%)", animationDelay: "4s" }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,191,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,191,255,0.4) 1px, transparent 1px)`,
+            backgroundSize: "45px 45px",
+          }}
+        />
+      </div>
 
-      {/* Header with Typewriter */}
-      <div className="mb-8 md:mb-12 text-center z-10 w-full max-w-2xl px-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
-            Mentoria Hub
-          </span>{" "}
-          <span className="text-gray-800 dark:text-gray-100">это</span>
-        </h1>
-        <div className="text-xl sm:text-2xl md:text-3xl font-medium text-gray-600 dark:text-gray-300 min-h-[40px]">
-          <Typewriter
-            text={[
-              "твой путь к новым знаниям",
-              "лучшая платформа для роста",
-              "сообщество крутых менторов",
-              "удобный интерактивный формат",
-              "пространство для твоих идей",
-            ]}
-            speed={60}
-            waitTime={2000}
-            deleteSpeed={30}
-            cursorChar={"_"}
-            className="text-purple-600 dark:text-purple-400 font-bold"
+      {/* Left panel — decorative (only desktop) */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden bg-card border-r border-border p-12 z-10">
+        {/* Glow & Grid inside left panel */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-1/4 -right-1/4 w-full h-full rounded-full opacity-[0.1] animate-blob"
+            style={{ background: "radial-gradient(circle, #00BFFF 0%, transparent 70%)" }} />
+          <div className="absolute -bottom-1/4 -left-1/4 w-full h-full rounded-full opacity-[0.07] animate-blob"
+            style={{ background: "radial-gradient(circle, #59DFFF 0%, transparent 70%)", animationDelay: "3s" }} />
+          <div className="absolute inset-0 opacity-[0.05]"
+            style={{
+              backgroundImage: `linear-gradient(rgba(0,191,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,191,255,0.3) 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
           />
+        </div>
+
+        {/* Logo */}
+        <Link href="/" className="relative flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00BFFF] to-[#59DFFF] shadow-md shadow-[#00BFFF]/20 flex items-center justify-center text-background font-black text-xl">
+            M
+          </div>
+          <div>
+            <div className="text-foreground font-bold text-lg leading-none">Mentoria</div>
+            <div className="text-[#59DFFF] text-[10px] font-bold uppercase tracking-widest">Hub</div>
+          </div>
+        </Link>
+
+        {/* Central tagline */}
+        <div className="relative">
+          <h2 className="text-4xl font-black text-foreground leading-tight mb-4">
+            Присоединяйся<br />к нашему<br />сообществу! 🚀
+          </h2>
+          <p className="text-gray-400 text-base leading-relaxed mb-8">
+            Тысячи школьников уже строят своё будущее с Mentoria
+          </p>
+
+          <div className="space-y-4">
+            {PERKS.map((perk, i) => (
+              <div key={i} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3 shadow-sm">
+                <div className="w-6 h-6 rounded-full bg-[rgba(0,191,255,0.1)] flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-[#00BFFF]" />
+                </div>
+                <span className="text-gray-300 text-sm font-medium">{perk}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats row */}
+          <div className="mt-10 flex gap-10">
+            {[
+              { v: "10K+", l: "учеников" },
+              { v: "500+", l: "возможностей" },
+              { v: "50+", l: "курсов" },
+            ].map((s, i) => (
+              <div key={i}>
+                <div className="text-2xl font-black text-[#00BFFF] drop-shadow-[0_0_8px_rgba(0,191,255,0.3)]">{s.v}</div>
+                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mt-0.5">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom link */}
+        <div className="relative text-gray-400 text-sm">
+          Уже есть аккаунт?{" "}
+          <Link href="/login" className="text-[#00BFFF] font-semibold hover:underline">
+            Войти →
+          </Link>
         </div>
       </div>
 
-      {/* Registration Card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/20 dark:border-gray-800/50 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] p-8 relative z-10"
-      >
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Создать аккаунт</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Присоединяйся к нам и начни обучаться уже сегодня
-          </p>
-        </div>
+      {/* Right panel — form */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-12 relative z-10">
+        {/* Mobile logo */}
+        <Link href="/" className="lg:hidden flex items-center gap-2 mb-10">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00BFFF] to-[#59DFFF] shadow-lg flex items-center justify-center text-background font-black text-lg">M</div>
+          <span className="font-bold text-foreground text-lg">Mentoria Hub</span>
+        </Link>
 
-        {error && (
-          <div className="p-3 mb-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 rounded-xl text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-              Имя пользователя
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                <User className="w-5 h-5" />
-              </div>
-              <input
-                required
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="Иван Иванов"
+        <div className="w-full max-w-md">
+          {/* Mobile Typewriter */}
+          <div className="lg:hidden mb-8 text-center">
+            <h1 className="text-2xl font-extrabold text-foreground mb-2">
+              <span className="gradient-text">Mentoria Hub</span>{" "}это
+            </h1>
+            <div className="text-base text-gray-400 min-h-[28px]">
+              <Typewriter
+                key={language}
+                text={[t("register_tw_1", "твой путь к новым знаниям"), t("register_tw_2", "лучшая платформа для роста"), t("register_tw_3", "пространство для твоих идей")]}
+                speed={60}
+                waitTime={2000}
+                deleteSpeed={30}
+                cursorChar={"_"}
+                className="text-[#00BFFF] font-bold"
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-              Email адрес
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                <Mail className="w-5 h-5" />
-              </div>
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="name@example.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
-              Пароль
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                <Lock className="w-5 h-5" />
-              </div>
-              <input
-                required
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-gray-900 dark:text-white tracking-widest disabled:opacity-50"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 mt-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+          {/* Form Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="card-glass p-8 border border-border bg-card shadow-2xl relative"
           >
-            {loading ? "Регистрация..." : "Зарегистрироваться"}
-            {!loading && <ArrowRight className="w-5 h-5" />}
-          </button>
-        </form>
+            <div className="mb-7">
+              <h2 className="text-2xl font-black text-foreground mb-1.5">
+                Создать аккаунт
+              </h2>
+              <p className="text-sm text-gray-400">
+                Присоединяйся и начни обучаться уже сегодня
+              </p>
+            </div>
 
-        <div className="mt-8 flex items-center justify-between">
-          <div className="h-px w-full bg-gray-200 dark:bg-gray-800"></div>
-          <span className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-            Или войти через
-          </span>
-          <div className="h-px w-full bg-gray-200 dark:bg-gray-800"></div>
+            {error && (
+              <div className="p-3.5 mb-5 bg-red-950/20 border border-red-800/40 text-red-400 rounded-xl text-sm flex items-start gap-2 shadow-[0_0_15px_rgba(239,68,68,0.05)]">
+                <span className="mt-0.5">⚠️</span>
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4.5">
+              {[
+                { label: "Имя пользователя", icon: User, type: "text", value: name, onChange: setName, placeholder: "Иван Иванов" },
+                { label: "Email адрес", icon: Mail, type: "email", value: email, onChange: setEmail, placeholder: "name@example.com" },
+                { label: "Пароль", icon: Lock, type: "password", value: password, onChange: setPassword, placeholder: "••••••••" },
+              ].map(({ label, icon: Icon, type, value, onChange, placeholder }, i) => (
+                <div key={i}>
+                  <label className="text-sm font-semibold text-foreground/80 mb-1.5 block">
+                    {label}
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#00BFFF] transition-colors">
+                      <Icon className="w-4.5 h-4.5" />
+                    </div>
+                    <input
+                      required
+                      type={type}
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      disabled={loading}
+                      className={`input-premium w-full pl-11 pr-4 py-3.5 text-sm placeholder:text-gray-500 disabled:opacity-50 ${type === "password" ? "tracking-widest placeholder:tracking-normal" : ""}`}
+                      placeholder={placeholder}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-4 mt-3 text-base rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 font-bold"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                    Регистрация...
+                  </>
+                ) : (
+                  <>Зарегистрироваться <ArrowRight className="w-5 h-5" /></>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Или через</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button className="flex items-center justify-center gap-2 py-3 bg-card hover:bg-background border border-border rounded-xl transition-all text-foreground text-sm font-semibold shadow-sm hover:shadow-[0_0_15px_rgba(0,191,255,0.1)]">
+                <Globe className="w-4 h-4 text-[#00BFFF]" />
+                Google
+              </button>
+              <button className="flex items-center justify-center gap-2 py-3 bg-card hover:bg-background border border-border rounded-xl transition-all text-foreground text-sm font-semibold shadow-sm hover:shadow-[0_0_15px_rgba(0,191,255,0.1)]">
+                <Code className="w-4 h-4 text-[#00BFFF]" />
+                GitHub
+              </button>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-gray-400">
+              Уже есть аккаунт?{" "}
+              <Link href="/login" className="font-bold text-[#00BFFF] hover:underline">
+                Войти
+              </Link>
+            </p>
+          </motion.div>
         </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <button className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm text-gray-700 dark:text-gray-300 font-medium">
-            <Globe className="w-5 h-5" />
-            Google
-          </button>
-          <button className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm text-gray-700 dark:text-gray-300 font-medium">
-            <Code className="w-5 h-5" />
-            GitHub
-          </button>
-        </div>
-
-        <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-          Уже есть аккаунт?{" "}
-          <Link href="/login" className="font-bold text-purple-600 dark:text-purple-400 hover:underline">
-            Войти
-          </Link>
-        </p>
-      </motion.div>
+      </div>
     </div>
   );
 }

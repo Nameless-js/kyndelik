@@ -11,12 +11,15 @@ import { LearningPath, PathNode } from "@/components/ui/learning-path";
 import { AICaseGenerator } from "@/components/ui/ai-case-generator";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
 
 type SidebarTab = "lessons" | "tasks";
 
 export default function CourseViewer({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const { courses, enrolledCourses, enrollCourse, markLessonComplete, profile, user } = useAppStore();
   
   const course = courses.find(c => c.id === resolvedParams.id);
@@ -30,7 +33,9 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (course && course.lessons.length > 0 && !activeLessonId) {
-      setActiveLessonId(course.lessons[0].id);
+      Promise.resolve().then(() => {
+        setActiveLessonId(course.lessons[0].id);
+      });
     }
   }, [course, activeLessonId]);
 
@@ -38,7 +43,9 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
     if (enrolled) {
       const completed: Record<string, boolean> = {};
       enrolled.completedLessons.forEach(id => { completed[id] = true; });
-      setQuizCompleted(completed);
+      Promise.resolve().then(() => {
+        setQuizCompleted(completed);
+      });
     }
   }, [enrolled]);
 
@@ -72,32 +79,35 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col md:flex-row transition-colors duration-300">
+    <div className={cn("min-h-screen flex flex-col md:flex-row transition-colors duration-300", isDark ? "bg-[#050505] text-white" : "bg-[#f0f4f8] text-gray-900")}>
       
       {/* Sidebar */}
-      <div className="w-full md:w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col h-[calc(100vh-4rem)] sticky top-16">
+      <div className={cn(
+        "w-full md:w-80 flex-shrink-0 flex flex-col h-[calc(100vh-4rem)] sticky top-16 border-r transition-colors duration-300",
+        isDark ? "bg-[#0a1020]/80 border-gray-800" : "bg-white/90 border-gray-200"
+      )}>
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <Link href="/courses" className="flex items-center text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors">
+        <div className={cn("p-6 border-b", isDark ? "border-gray-800" : "border-gray-200")}>
+          <Link href="/courses" className={cn("flex items-center text-sm mb-4 transition-colors", isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900")}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             Назад к курсам
           </Link>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{course.title}</h2>
+          <h2 className={cn("text-xl font-bold mb-2", isDark ? "text-white" : "text-gray-900")}>{course.title}</h2>
           
           {enrolled && (
             <div className="mt-4">
               <div className="flex justify-between text-xs mb-1">
-                <span className="font-medium text-gray-700 dark:text-gray-300">Прогресс курса</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">{progress}%</span>
+                <span className={cn("font-medium", isDark ? "text-gray-300" : "text-gray-700")}>Прогресс курса</span>
+                <span className={cn("font-bold", isDark ? "text-blue-400" : "text-blue-600")}>{progress}%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5">
+              <div className={cn("w-full rounded-full h-2.5", isDark ? "bg-gray-800" : "bg-gray-100")}>
                 <motion.div
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full"
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 />
               </div>
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className={cn("mt-2 text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                 {completedLessons} из {totalLessons} уроков пройдено
               </div>
             </div>
@@ -115,14 +125,18 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
         </div>
         
         {/* Tab Switcher */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800">
+        <div className={cn("flex border-b", isDark ? "border-gray-800" : "border-gray-200")}>
           <button
             onClick={() => { setActiveTab("lessons"); setSelectedLevel(null); }}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all border-b-2",
+              "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all border-b-2 cursor-pointer",
               activeTab === "lessons"
-                ? "text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10"
-                : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
+                ? isDark
+                  ? "text-[#00BFFF] border-[#00BFFF] bg-[#00BFFF]/5"
+                  : "text-[#0088cc] border-[#0088cc] bg-[#0088cc]/5"
+                : isDark
+                  ? "text-gray-400 border-transparent hover:text-white"
+                  : "text-gray-500 border-transparent hover:text-gray-900"
             )}
           >
             <Video className="w-4 h-4" />
@@ -131,10 +145,14 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
           <button
             onClick={() => { setActiveTab("tasks"); setActiveLessonId(null); }}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all border-b-2",
+              "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all border-b-2 cursor-pointer",
               activeTab === "tasks"
-                ? "text-green-600 dark:text-green-400 border-green-600 dark:border-green-400 bg-green-50/50 dark:bg-green-900/10"
-                : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
+                ? isDark
+                  ? "text-green-400 border-green-400 bg-green-400/5"
+                  : "text-green-600 border-green-600 bg-green-600/5"
+                : isDark
+                  ? "text-gray-400 border-transparent hover:text-white"
+                  : "text-gray-500 border-transparent hover:text-gray-900"
             )}
           >
             <ListChecks className="w-4 h-4" />
@@ -167,10 +185,14 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                         setSelectedLevel(null);
                       }}
                       className={cn(
-                        "w-full flex items-start text-left p-3 rounded-xl transition-all",
+                        "w-full flex items-start text-left p-3 rounded-xl transition-all cursor-pointer border",
                         isActive 
-                          ? "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800" 
-                          : "hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent"
+                          ? isDark 
+                            ? "bg-[#00BFFF]/10 border-[#00BFFF]/30" 
+                            : "bg-[#0088cc]/10 border-[#0088cc]/30" 
+                          : isDark
+                            ? "hover:bg-white/5 border-transparent"
+                            : "hover:bg-gray-100/60 border-transparent"
                       )}
                     >
                       <div className="mt-0.5 mr-3">
@@ -179,7 +201,13 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                         ) : (
                           <div className={cn(
                             "w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold",
-                            isActive ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400" : "border-gray-300 text-gray-400 dark:border-gray-700"
+                            isActive 
+                              ? isDark 
+                                ? "border-[#00BFFF] text-[#00BFFF]" 
+                                : "border-[#0088cc] text-[#0088cc]" 
+                              : isDark 
+                                ? "border-gray-700 text-gray-400" 
+                                : "border-gray-300 text-gray-500"
                           )}>
                             {index + 1}
                           </div>
@@ -188,7 +216,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                       <div className="flex-1 min-w-0">
                         <div className={cn(
                           "text-sm font-medium",
-                          isActive ? "text-blue-900 dark:text-blue-100" : "text-gray-700 dark:text-gray-300"
+                          isActive ? (isDark ? "text-white" : "text-gray-900") : (isDark ? "text-gray-300" : "text-gray-700")
                         )}>
                           {lesson.title}
                         </div>
@@ -225,30 +253,36 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                         setShowCertificate(false);
                       }}
                       className={cn(
-                        "w-full flex items-center text-left p-3 rounded-xl transition-all",
+                        "w-full flex items-center text-left p-3 rounded-xl transition-all border",
                         isActive 
-                          ? "bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-800"
+                          ? isDark 
+                            ? "bg-green-950/30 border-green-800 text-green-300"
+                            : "bg-green-50 border-green-300 text-green-800"
                           : unlocked && enrolled
-                            ? "hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent"
-                            : "opacity-50 cursor-not-allowed border border-transparent"
+                            ? isDark
+                              ? "hover:bg-white/5 border-transparent cursor-pointer"
+                              : "hover:bg-gray-100/60 border-transparent cursor-pointer"
+                            : "opacity-50 cursor-not-allowed border-transparent"
                       )}
                     >
                       <div className="mr-3">
                         {isCompleted ? (
-                          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-md shadow-green-200 dark:shadow-green-900">
+                          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-md">
                             <Check className="w-4 h-4 text-white" />
                           </div>
                         ) : unlocked && enrolled ? (
                           <div className={cn(
                             "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md",
                             isActive
-                              ? "bg-green-500 text-white shadow-green-200 dark:shadow-green-900"
-                              : "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                              ? "bg-green-500 text-white"
+                              : isDark
+                                ? "bg-green-950/40 text-green-400"
+                                : "bg-green-100 text-green-700"
                           )}>
                             {index + 1}
                           </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
                             <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
                           </div>
                         )}
@@ -256,7 +290,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                       <div className="flex-1 min-w-0">
                         <div className={cn(
                           "text-sm font-medium",
-                          isActive ? "text-green-800 dark:text-green-200" : "text-gray-700 dark:text-gray-300"
+                          isActive ? (isDark ? "text-green-300" : "text-green-800") : (isDark ? "text-gray-300" : "text-gray-700")
                         )}>
                           Уровень {index + 1}
                         </div>
@@ -275,7 +309,10 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 bg-white p-6 md:p-10 overflow-y-auto">
+      <div className={cn(
+        "flex-1 p-6 md:p-10 overflow-y-auto transition-colors duration-300",
+        isDark ? "bg-[#050505]" : "bg-white"
+      )}>
         <div className="max-w-4xl mx-auto">
           
           <AnimatePresence mode="wait">
@@ -286,32 +323,40 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-white rounded-3xl p-12 text-center border-8 border-gray-100 shadow-2xl relative overflow-hidden"
+                className={cn(
+                  "rounded-3xl p-12 text-center border-8 shadow-2xl relative overflow-hidden transition-all duration-300",
+                  isDark
+                    ? "bg-gray-900 border-gray-800 text-white"
+                    : "bg-white border-gray-100 text-gray-900"
+                )}
               >
                 <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600" />
                 <Award className="w-24 h-24 text-yellow-500 mx-auto mb-6" />
-                <h1 className="text-4xl font-serif text-gray-900 mb-2">СЕРТИФИКАТ</h1>
-                <p className="text-gray-500 font-medium tracking-widest uppercase mb-10">Об окончании курса</p>
-                <p className="text-lg text-gray-600 mb-2">Настоящим подтверждается, что</p>
-                <h2 className="text-3xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4 inline-block px-12">
+                <h1 className={cn("text-4xl font-serif mb-2", isDark ? "text-white" : "text-gray-900")}>СЕРТИФИКАТ</h1>
+                <p className={cn("font-medium tracking-widest uppercase mb-10 text-xs", isDark ? "text-gray-400" : "text-gray-500")}>Об окончании курса</p>
+                <p className="text-lg mb-2">Настоящим подтверждается, что</p>
+                <h2 className={cn("text-3xl font-bold mb-8 border-b pb-4 inline-block px-12", isDark ? "text-white border-gray-800" : "text-gray-900 border-gray-200")}>
                   {profile?.name || "Студент Mentoria"}
                 </h2>
-                <p className="text-lg text-gray-600 mb-2">успешно завершил(а) курс</p>
-                <h3 className="text-2xl font-bold text-blue-600 mb-12">«{course.title}»</h3>
+                <p className="text-lg mb-2">успешно завершил(а) курс</p>
+                <h3 className={cn("text-2xl font-bold mb-12", isDark ? "text-blue-400" : "text-blue-600")}>«{course.title}»</h3>
                 <div className="flex justify-between items-end mt-16 px-12">
                   <div className="text-left">
                     <div className="border-b border-gray-400 w-40 mb-2"></div>
-                    <p className="text-sm font-bold text-gray-900">Mentoria Hub</p>
+                    <p className={cn("text-sm font-bold", isDark ? "text-white" : "text-gray-900")}>Mentoria Hub</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-gray-900 mb-1">{new Date().toLocaleDateString()}</p>
+                    <p className={cn("text-sm font-bold mb-1", isDark ? "text-white" : "text-gray-900")}>{new Date().toLocaleDateString()}</p>
                     <p className="text-xs text-gray-500">Дата выдачи</p>
                   </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-gray-100 flex justify-center">
                   <button 
                     onClick={() => window.print()}
-                    className="flex items-center px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors print:hidden"
+                    className={cn(
+                      "flex items-center px-6 py-3 rounded-xl font-medium transition-colors print:hidden cursor-pointer",
+                      isDark ? "bg-white text-gray-900 hover:bg-gray-200" : "bg-gray-900 text-white hover:bg-gray-800"
+                    )}
                   >
                     <Download className="w-5 h-5 mr-2" />
                     Скачать PDF
@@ -325,18 +370,24 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 key="enroll"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-900 rounded-2xl p-10 text-center border border-gray-200 dark:border-gray-800 shadow-sm mt-10"
+                className={cn(
+                  "rounded-2xl p-10 text-center border shadow-lg mt-10 transition-colors duration-300",
+                  isDark ? "bg-gray-900/60 border-gray-800" : "bg-white border-gray-200"
+                )}
               >
                 <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                   <PlayCircle className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Начать изучение курса</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-xl mx-auto text-lg">
+                <h2 className={cn("text-3xl font-bold mb-4", isDark ? "text-white" : "text-gray-900")}>Начать изучение курса</h2>
+                <p className={cn("mb-8 max-w-xl mx-auto text-lg", isDark ? "text-gray-400" : "text-gray-600")}>
                   Запишитесь на курс, чтобы получить доступ к видео-урокам, заданиям и отслеживать свой прогресс.
                 </p>
                 <button 
                   onClick={handleEnroll}
-                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className={cn(
+                    "px-8 py-4 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer",
+                    isDark ? "bg-blue-600 hover:bg-blue-500" : "bg-blue-600 hover:bg-blue-700"
+                  )}
                 >
                   Записаться на курс
                 </button>
@@ -352,16 +403,19 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className={cn(
+                  "rounded-2xl p-6 border shadow-sm transition-colors duration-300",
+                  isDark ? "bg-gray-900/60 border-gray-800" : "bg-white border-gray-100"
+                )}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-green-200 dark:shadow-green-900">
+                    <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
                       {selectedLevel + 1}
                     </div>
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <h1 className={cn("text-2xl font-bold", isDark ? "text-white" : "text-gray-900")}>
                         Уровень {selectedLevel + 1}: {course.lessons[selectedLevel].title}
                       </h1>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className={cn("text-sm", isDark ? "text-gray-400" : "text-gray-500")}>
                         Ответь на вопросы, чтобы пройти уровень
                       </p>
                     </div>
@@ -384,7 +438,10 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center py-8 relative bg-white min-h-[800px] rounded-3xl overflow-hidden shadow-inner"
+                className={cn(
+                  "flex flex-col items-center py-8 relative min-h-[800px] rounded-3xl overflow-hidden shadow-inner transition-colors duration-300 border",
+                  isDark ? "bg-gray-900/40 border-gray-800" : "bg-white border-gray-100"
+                )}
               >
                 <div className="relative z-10 w-full flex flex-col items-center">
 
@@ -401,7 +458,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                     height={100}
                     className="drop-shadow-lg"
                   />
-                  <p className="text-center text-sm text-gray-500 mt-2 font-medium">
+                  <p className={cn("text-center text-sm mt-2 font-medium", isDark ? "text-gray-400" : "text-gray-500")}>
                     Выбери уровень! 🎯
                   </p>
                 </motion.div>
@@ -441,7 +498,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                     >
                       <button
                         onClick={() => { setShowCertificate(true); setSelectedLevel(null); }}
-                        className="w-24 h-24 bg-gradient-to-b from-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-300 dark:shadow-amber-900 hover:scale-105 transition-transform"
+                        className="w-24 h-24 bg-gradient-to-b from-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer"
                       >
                         <Award className="w-12 h-12 text-white" />
                       </button>
@@ -461,7 +518,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 className="space-y-8"
               >
                 {/* Video Player */}
-                <div className="w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden relative shadow-xl">
+                <div className="w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden relative shadow-xl border border-white/5">
                   {activeLesson?.videoUrl ? (
                     <iframe
                       src={(() => {
@@ -470,7 +527,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                         const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
                         return match && match[1] ? `https://www.youtube.com/embed/${match[1]}` : url;
                       })()}
-                      className="w-full h-full"
+                      className="w-full h-full animate-fade-in"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
                       title={activeLesson.title}
@@ -488,13 +545,16 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 </div>
 
                 {/* Lesson Info */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className={cn(
+                  "rounded-2xl p-6 border shadow-sm transition-colors duration-300",
+                  isDark ? "bg-gray-900/60 border-gray-800" : "bg-white border-gray-100"
+                )}>
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                      <h1 className={cn("text-2xl font-bold mb-1", isDark ? "text-white" : "text-gray-900")}>
                         {activeLesson?.title}
                       </h1>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{activeLesson?.duration} • {course.title}</p>
+                      <p className={cn("text-sm", isDark ? "text-gray-400" : "text-gray-500")}>{activeLesson?.duration} • {course.title}</p>
                     </div>
                     {enrolled?.completedLessons.includes(activeLessonId || "") && (
                       <div className="flex items-center px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg font-medium text-sm">
@@ -503,7 +563,7 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                       </div>
                     )}
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-4 leading-relaxed">
+                  <p className={cn("mt-4 leading-relaxed", isDark ? "text-gray-300" : "text-gray-600")}>
                     Посмотри видео выше, затем перейди во вкладку «Задачи» чтобы проверить знания и пройти уровень!
                   </p>
                 </div>
@@ -522,9 +582,9 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-20 text-center"
               >
-                <Video className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-                <h2 className="text-xl font-bold text-gray-400 dark:text-gray-500">Выберите урок</h2>
-                <p className="text-gray-400 dark:text-gray-600 mt-2">Выберите урок из списка слева</p>
+                <Video className={cn("w-16 h-16 mb-4", isDark ? "text-gray-700" : "text-gray-300")} />
+                <h2 className={cn("text-xl font-bold", isDark ? "text-gray-500" : "text-gray-400")}>Выберите урок</h2>
+                <p className={cn("mt-2", isDark ? "text-gray-600" : "text-gray-400")}>Выберите урок из списка слева</p>
               </motion.div>
             )}
           </AnimatePresence>

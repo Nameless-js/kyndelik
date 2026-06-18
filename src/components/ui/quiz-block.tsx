@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { CheckCircle, XCircle, Star, Zap } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 
 // --- Хук для воспроизведения звуков ---
 function useSound() {
@@ -61,7 +62,6 @@ const mascotMessages: Record<MascotState, string> = {
   victory: "НЕВЕРОЯТНО! Ты прошёл все задания! 🏆",
 };
 
-// Конфетти компонент
 function Confetti() {
   const colors = ["#FF6B6B", "#FFE66D", "#4ECDC4", "#A8E6CF", "#6C5CE7", "#FD79A8"];
   const pieces = Array.from({ length: 40 });
@@ -74,18 +74,18 @@ function Confetti() {
           className="absolute w-3 h-3 rounded-sm"
           style={{
             backgroundColor: colors[i % colors.length],
-            left: `${Math.random() * 100}%`,
+            left: `${(i * 17) % 100}%`,
             top: "-10%",
           }}
           animate={{
             y: ["0vh", "110vh"],
-            x: [`${(Math.random() - 0.5) * 200}px`],
-            rotate: [0, Math.random() * 720],
+            x: [`${((i * 29) % 200) - 100}px`],
+            rotate: [0, (i * 72) % 720],
             opacity: [1, 1, 0],
           }}
           transition={{
-            duration: 2 + Math.random() * 2,
-            delay: Math.random() * 0.8,
+            duration: 2 + ((i * 13) % 21) / 10,
+            delay: ((i * 7) % 9) / 10,
             ease: "easeIn",
           }}
         />
@@ -164,13 +164,8 @@ function XPBar({ current, total }: { current: number; total: number }) {
 
 // Главный блок квиза
 export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompleted }: QuizBlockProps) {
-  if (!questions || questions.length === 0) {
-    return (
-      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center text-gray-500 dark:text-gray-400">
-        В этом уровне пока нет заданий. Вернитесь позже!
-      </div>
-    );
-  }
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -182,6 +177,14 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
   const { play, stop } = useSound();
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center text-gray-500 dark:text-gray-400">
+        В этом уровне пока нет заданий. Вернитесь позже!
+      </div>
+    );
+  }
 
   const question = questions[currentQ];
   const isCorrect = selected === question?.correctIndex;
@@ -235,13 +238,18 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
     return (
       <div className="relative">
         {showConfetti && <Confetti />}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-8 text-center">
+        <div className={cn(
+          "rounded-2xl border p-8 text-center transition-colors duration-300",
+          isDark
+            ? "bg-[#0a1020]/60 border-blue-900/40 text-white"
+            : "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-gray-900"
+        )}>
           <div className="flex justify-center mb-4">
             <Mascot state="victory" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">🎉 Урок пройден!</h3>
-          <p className="text-gray-600 mb-6">
-            Ты правильно ответил на <span className="font-bold text-blue-600">{correctCount}</span> из{" "}
+          <h3 className={cn("text-2xl font-bold mb-2", isDark ? "text-white" : "text-gray-900")}>🎉 Урок пройден!</h3>
+          <p className={cn("mb-6", isDark ? "text-gray-300" : "text-gray-600")}>
+            Ты правильно ответил на <span className={cn("font-bold", isDark ? "text-blue-400" : "text-blue-600")}>{correctCount}</span> из{" "}
             <span className="font-bold">{questions.length}</span> вопросов. Отличная работа!
           </p>
           <div className="flex items-center justify-center gap-2 text-yellow-600 font-bold text-lg mb-8">
@@ -252,7 +260,12 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
           {onClose && (
             <button
               onClick={onClose}
-              className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-colors"
+              className={cn(
+                "px-8 py-3 font-bold rounded-xl shadow-md transition-colors cursor-pointer",
+                isDark
+                  ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/50"
+                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+              )}
             >
               Продолжить
             </button>
@@ -268,18 +281,27 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
         "rounded-2xl border-2 transition-all duration-300 overflow-hidden",
         answered
           ? isCorrect
-            ? "border-green-200 bg-green-50/50"
-            : "border-red-200 bg-red-50/50"
-          : "border-gray-100 bg-white"
+            ? isDark
+              ? "border-green-800/80 bg-green-950/20"
+              : "border-green-200 bg-green-50/50"
+            : isDark
+              ? "border-red-800/80 bg-red-950/20"
+              : "border-red-200 bg-red-50/50"
+          : isDark
+            ? "border-gray-800 bg-gray-900/60"
+            : "border-gray-100 bg-white"
       )}
     >
       {/* Заголовок с прогрессом */}
-      <div className="p-5 border-b border-gray-100">
+      <div className={cn("p-5 border-b", isDark ? "border-gray-800" : "border-gray-100")}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+          <h3 className={cn("text-sm font-bold uppercase tracking-wider", isDark ? "text-gray-400" : "text-gray-500")}>
             🎯 Проверь знания
           </h3>
-          <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+          <span className={cn(
+            "text-sm font-bold px-3 py-1 rounded-full",
+            isDark ? "text-blue-400 bg-blue-950/50" : "text-blue-600 bg-blue-50"
+          )}>
             {currentQ + 1} / {questions.length}
           </span>
         </div>
@@ -302,20 +324,27 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25 }}
             >
-              <p className="text-lg font-semibold text-gray-900 mb-5 leading-snug">
+              <p className={cn("text-lg font-semibold mb-5 leading-snug", isDark ? "text-white" : "text-gray-900")}>
                 {question.text}
               </p>
 
               <div className="space-y-3">
                 {question.options.map((opt, i) => {
-                  let style =
-                    "bg-white border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50";
+                  let style = isDark
+                    ? "bg-gray-800/40 border-gray-700 text-gray-300 hover:border-blue-400 hover:bg-blue-950/20"
+                    : "bg-white border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50";
                   if (answered) {
                     if (i === question.correctIndex)
-                      style = "bg-green-50 border-green-400 text-green-800 font-semibold";
+                      style = isDark
+                        ? "bg-green-950/30 border-green-600 text-green-300 font-semibold"
+                        : "bg-green-50 border-green-400 text-green-800 font-semibold";
                     else if (i === selected)
-                      style = "bg-red-50 border-red-400 text-red-700";
-                    else style = "bg-white border-gray-100 text-gray-400 opacity-60";
+                      style = isDark
+                        ? "bg-red-950/30 border-red-600 text-red-300"
+                        : "bg-red-50 border-red-400 text-red-700";
+                    else style = isDark
+                      ? "bg-gray-950 border-gray-850 text-gray-600 opacity-60"
+                      : "bg-white border-gray-100 text-gray-400 opacity-60";
                   }
 
                   return (
@@ -353,10 +382,14 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className={cn(
-                      "mt-4 p-4 rounded-xl text-sm",
+                      "mt-4 p-4 rounded-xl text-sm border",
                       isCorrect
-                        ? "bg-green-100 text-green-800 border border-green-200"
-                        : "bg-amber-50 text-amber-800 border border-amber-200"
+                        ? isDark
+                          ? "bg-green-950/30 text-green-300 border-green-800"
+                          : "bg-green-100 text-green-800 border border-green-200"
+                        : isDark
+                          ? "bg-amber-950/30 text-amber-300 border-amber-800"
+                          : "bg-amber-50 text-amber-800 border border-amber-200"
                     )}
                   >
                     <span className="font-bold">{isCorrect ? "✅ Верно! " : "💡 Объяснение: "}</span>
@@ -375,14 +408,24 @@ export function QuizBlock({ questions, lessonTitle, onComplete, onClose, isCompl
                   {!isCorrect && wrongAttempts < 2 && (
                     <button
                       onClick={handleRetry}
-                      className="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-gray-400 transition-colors"
+                      className={cn(
+                        "px-5 py-2.5 rounded-xl border-2 font-semibold text-sm transition-colors cursor-pointer",
+                        isDark
+                          ? "border-gray-700 text-gray-300 hover:border-gray-500 hover:bg-gray-800"
+                          : "border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                      )}
                     >
                       Попробовать ещё раз
                     </button>
                   )}
                   <button
                     onClick={handleNext}
-                    className="flex-1 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-colors shadow-md"
+                    className={cn(
+                      "flex-1 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md cursor-pointer",
+                      isDark
+                        ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/50"
+                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+                    )}
                   >
                     {currentQ < questions.length - 1 ? "Следующий вопрос →" : "Завершить урок 🏆"}
                   </button>

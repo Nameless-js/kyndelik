@@ -48,7 +48,11 @@ export default function SetupPage() {
 
   useEffect(() => {
     // Pre-select current role if known
-    if (profile?.role) setSelectedRole(profile.role as Role);
+    if (profile?.role) {
+      Promise.resolve().then(() => {
+        setSelectedRole(profile.role as Role);
+      });
+    }
   }, [profile]);
 
   const handleUnlock = () => {
