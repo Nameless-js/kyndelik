@@ -476,9 +476,17 @@ export default function CourseViewer({ params }: { params: Promise<{ id: string 
                 <div className="w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden relative shadow-xl">
                   {activeLesson?.videoUrl ? (
                     <iframe
-                      src={activeLesson.videoUrl}
+                      src={(() => {
+                        const url = activeLesson.videoUrl;
+                        if (url.includes("youtube.com/embed/") || url.includes("youtube-nocookie.com/embed/")) return url;
+                        const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+                        return match && match[1] ? `https://www.youtube.com/embed/${match[1]}` : url;
+                      })()}
                       className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
+                      title={activeLesson.title}
+                      referrerPolicy="strict-origin-when-cross-origin"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center flex-col text-white">

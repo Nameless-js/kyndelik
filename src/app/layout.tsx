@@ -42,6 +42,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${lexend.variable} h-full antialiased`}
     >
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
@@ -53,6 +54,23 @@ export default function RootLayout({
               <main className="flex-grow pt-16">
                 {children}
               </main>
+              
+              {/* Google Translate Hidden Widget */}
+              <div id="google_translate_element" style={{ display: "none" }}></div>
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    function googleTranslateElementInit() {
+                      new google.translate.TranslateElement({
+                        pageLanguage: 'ru',
+                        includedLanguages: 'ru,en,kk',
+                        autoDisplay: false
+                      }, 'google_translate_element');
+                    }
+                  `,
+                }}
+              />
+              <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
             </AppProvider>
           </I18nProvider>
         </Providers>

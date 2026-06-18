@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 export default function MentorPortal() {
   const router = useRouter();
-  const { profile, isLoading, courses, setCourses, addLesson, addQuestion } = useAppStore();
+  const { profile, isLoading, courses, setCourses, addLesson, addQuestion, updateLessonVideoUrl } = useAppStore();
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
@@ -29,6 +29,11 @@ export default function MentorPortal() {
   const [addingLessonToCourse, setAddingLessonToCourse] = useState<string | null>(null);
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDuration, setLessonDuration] = useState("");
+  const [lessonVideoUrl, setLessonVideoUrl] = useState("");
+
+  // Edit Video URL State
+  const [editingVideoLesson, setEditingVideoLesson] = useState<{courseId: string, lessonId: string} | null>(null);
+  const [editingVideoUrl, setEditingVideoUrl] = useState("");
 
   // Add Question State
   const [addingQuestionToLesson, setAddingQuestionToLesson] = useState<{courseId: string, lessonId: string} | null>(null);
@@ -62,12 +67,20 @@ export default function MentorPortal() {
       id: `lesson-${Date.now()}`,
       title: lessonTitle,
       duration: lessonDuration,
+      videoUrl: lessonVideoUrl.trim() || undefined,
       questions: []
     };
     await addLesson(courseId, newLesson);
     setAddingLessonToCourse(null);
     setLessonTitle("");
     setLessonDuration("");
+    setLessonVideoUrl("");
+  };
+
+  const handleSaveVideoUrl = async (courseId: string, lessonId: string) => {
+    await updateLessonVideoUrl(courseId, lessonId, editingVideoUrl.trim());
+    setEditingVideoLesson(null);
+    setEditingVideoUrl("");
   };
 
   const handleAddQuestion = async (courseId: string, lessonId: string, e: React.FormEvent) => {
@@ -176,16 +189,71 @@ export default function MentorPortal() {
                               </div>
                               <div>
                                 <h4 className="font-bold text-gray-900 dark:text-white">{lesson.title}</h4>
-                                <span className="text-xs text-gray-500">{lesson.duration}</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-gray-500">{lesson.duration}</span>
+                                  {lesson.videoUrl ? (
+                                    <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                      <Video className="w-3 h-3" /> Видео загружено
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-amber-500 flex items-center gap-1">
+                                      <Video className="w-3 h-3" /> Нет видео
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <button 
-                              onClick={() => setAddingQuestionToLesson({courseId: course.id, lessonId: lesson.id})}
-                              className="text-sm font-semibold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                            >
-                              <Plus className="w-4 h-4" /> Добавить задачу
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingVideoLesson({courseId: course.id, lessonId: lesson.id});
+                                  setEditingVideoUrl(lesson.videoUrl || "");
+                                }}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                              >
+                                <Video className="w-4 h-4" /> Видео
+                              </button>
+                              <button 
+                                onClick={() => setAddingQuestionToLesson({courseId: course.id, lessonId: lesson.id})}
+                                className="text-sm font-semibold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                              >
+                                <Plus className="w-4 h-4" /> Задача
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Inline video URL editor */}
+                          {editingVideoLesson?.lessonId === lesson.id && (
+                            <div className="mb-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                              <p className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-2">Ссылка на YouTube Embed</p>
+                              <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                  <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                  <input
+                                    autoFocus
+                                    value={editingVideoUrl}
+                                    onChange={e => setEditingVideoUrl(e.target.value)}
+                                    type="url"
+                                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveVideoUrl(course.id, lesson.id)}
+                                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg flex items-center gap-1.5 transition-colors"
+                                >
+                                  <Check className="w-4 h-4" /> Сохранить
+                                </button>
+                                <button
+                                  onClick={() => { setEditingVideoLesson(null); setEditingVideoUrl(""); }}
+                                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold rounded-lg transition-colors"
+                                >
+                                  Отмена
+                                </button>
+                              </div>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5">Формат: youtube.com/embed/VIDEO_ID (скопируй из «Поделиться → Встроить»)</p>
+                            </div>
+                          )}
 
                           {/* Список вопросов */}
                           {lesson.questions && lesson.questions.length > 0 && (
@@ -280,6 +348,22 @@ export default function MentorPortal() {
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Продолжительность</label>
                               <input required value={lessonDuration} onChange={e=>setLessonDuration(e.target.value)} type="text" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none focus:ring-2 focus:ring-purple-500" placeholder="15 min" />
                             </div>
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Ссылка на видео (YouTube Embed URL)
+                            </label>
+                            <div className="relative">
+                              <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                value={lessonVideoUrl}
+                                onChange={e => setLessonVideoUrl(e.target.value)}
+                                type="url"
+                                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Используй формат embed: youtube.com/embed/... (не обязательно)</p>
                           </div>
                           <div className="flex gap-2">
                             <button type="submit" className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors">Сохранить</button>

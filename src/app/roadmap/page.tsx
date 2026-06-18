@@ -1,13 +1,15 @@
 "use client";
 
 import { useAppStore } from "@/lib/store";
-import { Map, Plus, CheckCircle2, ChevronRight, Target } from "lucide-react";
-import { useState } from "react";
+import { Map, Plus, CheckCircle2, ChevronRight, Target, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Milestone = {
   id: string;
   title: string;
   completed: boolean;
+  isCustom?: boolean;
 };
 
 type GradePlan = {
@@ -54,6 +56,27 @@ export default function RoadmapPage() {
   const [roadmap, setRoadmap] = useState<GradePlan[]>(INITIAL_ROADMAP);
   const [addingToGrade, setAddingToGrade] = useState<string | null>(null);
   const [newTask, setNewTask] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from local storage
+  useEffect(() => {
+    const saved = localStorage.getItem("mentoria_roadmap");
+    if (saved) {
+      try {
+        setRoadmap(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse roadmap", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to local storage on change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("mentoria_roadmap", JSON.stringify(roadmap));
+    }
+  }, [roadmap, isLoaded]);
 
   const toggleMilestone = (gradeName: string, milestoneId: string) => {
     setRoadmap(prev => prev.map(g => {
@@ -77,7 +100,7 @@ export default function RoadmapPage() {
       if (g.grade === gradeName) {
         return {
           ...g,
-          milestones: [...g.milestones, { id: `m-${Date.now()}`, title: newTask, completed: false }]
+          milestones: [...g.milestones, { id: `m-${Date.now()}`, title: newTask.trim(), completed: false, isCustom: true }]
         };
       }
       return g;
@@ -86,6 +109,20 @@ export default function RoadmapPage() {
     setNewTask("");
     setAddingToGrade(null);
   };
+
+  const handleDeleteTask = (gradeName: string, milestoneId: string) => {
+    setRoadmap(prev => prev.map(g => {
+      if (g.grade === gradeName) {
+        return {
+          ...g,
+          milestones: g.milestones.filter(m => m.id !== milestoneId)
+        };
+      }
+      return g;
+    }));
+  };
+
+  if (!isLoaded) return null; // Prevent hydration mismatch
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 transition-colors duration-300">
@@ -128,28 +165,46 @@ export default function RoadmapPage() {
 
                   {/* Milestones List */}
                   <div className="flex-1 space-y-3">
-                    {gradePlan.milestones.map((milestone) => (
-                      <button
-                        key={milestone.id}
-                        onClick={() => toggleMilestone(gradePlan.grade, milestone.id)}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                          milestone.completed 
-                            ? "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-75" 
-                            : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow-md"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <CheckCircle2 className={`w-6 h-6 mr-4 flex-shrink-0 transition-colors ${
-                            milestone.completed ? "text-green-500" : "text-gray-300 dark:text-gray-600"
-                          }`} />
-                          <span className={`text-left font-medium ${
-                            milestone.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-900 dark:text-gray-100"
-                          }`}>
-                            {milestone.title}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+                    <AnimatePresence>
+                      {gradePlan.milestones.map((milestone) => (
+                        <motion.div
+                          key={milestone.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                            milestone.completed 
+                              ? "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-75" 
+                              : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow-md"
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleMilestone(gradePlan.grade, milestone.id)}
+                            className="flex items-center flex-1 text-left"
+                          >
+                            <CheckCircle2 className={`w-6 h-6 mr-4 flex-shrink-0 transition-colors ${
+                              milestone.completed ? "text-green-500" : "text-gray-300 dark:text-gray-600"
+                            }`} />
+                            <span className={`font-medium ${
+                              milestone.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-900 dark:text-gray-100"
+                            }`}>
+                              {milestone.title}
+                            </span>
+                          </button>
+                          {milestone.isCustom && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTask(gradePlan.grade, milestone.id);
+                              }}
+                              className="p-2 ml-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
 
                     {/* Add new task input */}
                     {addingToGrade === gradePlan.grade ? (
